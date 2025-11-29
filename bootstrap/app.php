@@ -37,6 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'registration.complete' => CheckRegistrationComplete::class,
             'main.account' => MainAccountMiddleware::class,
         ]);
+
+        $middleware->redirectTo(fn() => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (UnauthorizedException $e, Request $request) {
