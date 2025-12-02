@@ -1,8 +1,8 @@
 services:
     app:
         build:
-            context: './vendor/laravel/sail/runtimes/8.4'
-            dockerfile: Dockerfile
+            context: '../../..'
+            dockerfile: ../../../infra/deployment/staging/Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
         image: 'sail-8.4/app'
@@ -34,11 +34,7 @@ services:
         networks:
             - sail
         healthcheck:
-            test:
-                - CMD
-                - mysqladmin
-                - ping
-                - '-p${DB_PASSWORD}'
+            test: ["CMD", "mysql", "-h", "localhost", "-uroot", "-proot"]
             retries: 3
             timeout: 5s
 networks:
