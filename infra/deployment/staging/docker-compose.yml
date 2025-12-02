@@ -2,7 +2,7 @@ services:
     app:
         build:
             context: '../../..'
-            dockerfile: ../../../infra/deployment/staging/Dockerfile
+            dockerfile: ./infra/deployment/staging/Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
         image: 'sail-8.4/app'
