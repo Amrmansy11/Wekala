@@ -27,8 +27,12 @@ class SizeTemplateController extends VendorController
     {
         $perPage = $request->integer('per_page', 15);
         $sizeTemplates = $this->sizeTemplateRepository->query()
-            ->where('vendor_id', AppHelper::getVendorId())
-            ->paginate($perPage);
+            ->where('vendor_id', AppHelper::getVendorId());
+
+        if($request->has('category_id')){
+            $sizeTemplates = $sizeTemplates->where('category_id',$request->integer('category_id'));
+        }
+            $sizeTemplates= $sizeTemplates->paginate($perPage);
         return response()->json([
             'data' => SizeTemplateResource::collection($sizeTemplates),
             'pagination' => [
@@ -39,6 +43,7 @@ class SizeTemplateController extends VendorController
                 'hasMorePages' => $sizeTemplates->hasMorePages(),
             ]
         ]);
+
     }
 
     public function store(SizeTemplateStoreRequest $request): JsonResponse
