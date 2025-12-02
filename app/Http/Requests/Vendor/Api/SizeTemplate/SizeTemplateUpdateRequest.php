@@ -75,6 +75,11 @@ class SizeTemplateUpdateRequest extends ResponseShape
                 'required',
                 'numeric',
             ],
+            'category_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('categories', 'id'),
+            ],
 
 
 

@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Resources\PolicyResource;
 use App\Repositories\Vendor\PolicyRepository;
-use App\Http\Controllers\Vendor\API\VendorController;
 
 class PolicyController extends VendorController
 {
@@ -16,7 +15,12 @@ class PolicyController extends VendorController
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->integer('per_page', 15);
-        $policies = $this->policyRepository->query()
+        $vendor = auth()->user()->vendor;
+        $policies = $this->policyRepository->query();
+        if($vendor->store_type !== 'seller') {
+            $policies = $policies->where('type', 'within_elwekala');
+        }
+        $policies = $policies
             ->paginate($perPage);
         return response()->json([
             'data' => PolicyResource::collection($policies),
