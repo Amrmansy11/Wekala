@@ -43,6 +43,7 @@ class SizeTemplateController extends VendorController
                 'hasMorePages' => $sizeTemplates->hasMorePages(),
             ]
         ]);
+
     }
 
     public function store(SizeTemplateStoreRequest $request): JsonResponse
