@@ -12,7 +12,7 @@ services:
             LARAVEL_SAIL: 1
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
         volumes:
-            - '.:/var/www/html'
+            - '../../..:/var/www/html'
         networks:
             sail:
                 ipv4_address: 172.18.13.2
