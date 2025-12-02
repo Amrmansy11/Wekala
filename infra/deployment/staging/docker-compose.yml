@@ -14,8 +14,8 @@ services:
         volumes:
             - '.:/var/www/html'
         networks:
-          sail:
-            ipv4_address: 172.18.13.2
+            sail:
+                ipv4_address: 172.18.13.2
         depends_on:
             - db
     db:
@@ -34,9 +34,10 @@ services:
             - 'sail-mysql:/var/lib/mysql'
             - '/tmp/mysql:/var/run/mysqld'
         networks:
-            - sail
+            sail:
+                ipv4_address: 172.18.13.3
         healthcheck:
-            test: ["CMD", "mysql", "-h", "localhost", "-uroot", "-proot"]
+            test: [ "CMD", "mysql", "-h", "localhost", "-uroot", "-proot" ]
             retries: 3
             timeout: 5s
 networks:
