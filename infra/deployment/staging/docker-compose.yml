@@ -19,8 +19,6 @@ services:
         depends_on:
             - db
     db:
-        build:
-            context: '../../..'
         image: 'mysql:8.0'
         environment:
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
