@@ -32,7 +32,7 @@ class ProductStoreRequest extends ResponseShape
             'sub_sub_category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
             //            'vendor_id' => 'required|exists:vendors,id',
-            'type' => 'required|in:b2b,b2b_b2c',
+            'type' => 'required|in:b2c,b2b_b2c',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
             'images' => 'nullable|array',
