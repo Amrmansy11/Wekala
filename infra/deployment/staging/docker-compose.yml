@@ -1,0 +1,49 @@
+services:
+    app:
+        build:
+            context: '../../..'
+            dockerfile: ./infra/deployment/staging/Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP}'
+        image: 'sail-8.4/app'
+
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+        volumes:
+            - '../../..:/var/www/html'
+        networks:
+            sail:
+                ipv4_address: 172.18.13.2
+        depends_on:
+            - db
+    db:
+        image: 'mysql:8.0'
+        environment:
+            MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASSWORD}'
+            MYSQL_ROOT_HOST: '%'
+            MYSQL_DATABASE: '${DB_DATABASE}'
+            MYSQL_USER: '${DB_USERNAME}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+            MYSQL_EXTRA_OPTIONS: '${MYSQL_EXTRA_OPTIONS}'
+        volumes:
+            - 'sail-mysql:/var/lib/mysql'
+        networks:
+            sail:
+                ipv4_address: 172.18.13.3
+        healthcheck:
+            test: [ "CMD", "mysql", "-h", "localhost", "-uroot", "-proot" ]
+            retries: 3
+            timeout: 5s
+networks:
+    sail:
+        driver: bridge
+        ipam:
+            config:
+                -   subnet: 172.18.13.0/24
+                    gateway: 172.18.13.1
+volumes:
+    sail-mysql:
+        driver: local
