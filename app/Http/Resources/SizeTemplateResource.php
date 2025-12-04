@@ -19,7 +19,7 @@ class SizeTemplateResource extends JsonResource
             'weight_from_pattern' => $this->resource->weight_from_pattern,
             'weight_to' => $this->resource->weight_to,
             'weight_to_pattern' => $this->resource->weight_to_pattern,
-            'category' => $this->resource->category ? new CategoriesVendorResource($this->resource->category) : null,
+            'type' => $this->resource->type,
         ];
     }
 }
