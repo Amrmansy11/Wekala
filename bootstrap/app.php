@@ -38,10 +38,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'main.account' => MainAccountMiddleware::class,
         ]);
 
-        $middleware->validateCsrfTokens([
-            '/deploy',
-        ]);
-
         $middleware->redirectTo(fn() => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
