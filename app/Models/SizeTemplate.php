@@ -19,8 +19,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property numeric $weight_to
  * @property numeric $weight_to_pattern
  * @property Vendor $vendor
- * @property ?int $category_id
- * @property-read Category $category
+ * @property string $type
  */
 class SizeTemplate extends Model
 {
@@ -37,16 +36,11 @@ class SizeTemplate extends Model
         'weight_from_pattern',
         'weight_to',
         'weight_to_pattern',
-        'category_id',
+        'type',
     ];
 
     public function vendor() : BelongsTo
     {
         return $this->belongsTo(Vendor::class);
-    }
-
-    public function category() : BelongsTo
-    {
-        return $this->belongsTo(Category::class);
     }
 }

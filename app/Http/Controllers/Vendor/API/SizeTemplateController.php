@@ -29,8 +29,8 @@ class SizeTemplateController extends VendorController
         $sizeTemplates = $this->sizeTemplateRepository->query()
             ->where('vendor_id', AppHelper::getVendorId());
 
-        if($request->has('category_id')){
-            $sizeTemplates = $sizeTemplates->where('category_id',$request->integer('category_id'));
+        if($request->has('type')){
+            $sizeTemplates = $sizeTemplates->where('type',$request->string('type'));
         }
             $sizeTemplates= $sizeTemplates->paginate($perPage);
         return response()->json([
