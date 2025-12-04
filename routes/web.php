@@ -9,7 +9,7 @@ Route::middleware('auth:admin-api')->get('/', function () {
 });
 
 Route::post('/deploy', function (Request $request) {
-    // Testing auto deployment v.6
+    // Testing auto deployment v.7
     $signature = $request->header('X-Hub-Signature-256');
 
     if (empty($signature)) {
