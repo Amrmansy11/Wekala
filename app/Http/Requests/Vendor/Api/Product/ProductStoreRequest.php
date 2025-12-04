@@ -25,8 +25,9 @@ class ProductStoreRequest extends ResponseShape
             'description' => 'nullable|string',
             'material_id' => 'required|string|exists:materials,id',
             'barcode' => 'required|string|unique:products,barcode',
-            'wholesale_price' => 'required|numeric|min:0',
+            'wholesale_price' => 'required_if:type,b2b_b2c|numeric|min:0',
             'consumer_price' => 'required|numeric|min:0',
+            'profit_percentage' => 'required_if:type,b2b_b2c|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'sub_category_id' => 'required|exists:categories,id',
             'sub_sub_category_id' => 'required|exists:categories,id',
@@ -187,5 +188,10 @@ class ProductStoreRequest extends ResponseShape
                 // Ignore errors in validation callback
             }
         });
+    }
+
+    private function checkWholeSalePrice()
+    {
+
     }
 }
