@@ -65,11 +65,11 @@ class ProductStoreRequest extends ResponseShape
             'colors.*.color' => 'nullable|string',
             'colors.*.bags' => 'nullable|integer|min:1',
             'colors.*.quantity_b2c' => 'nullable|integer|min:0',
-            'colors.*.quantity_b2b' => 'nullable|integer|min:0',
+            'colors.*.quantity_b2b' => 'required_if:type,b2b_b2c|integer|min:0',
             'colors.*.images' => 'nullable|array',
             'colors.*.images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'colors.*.image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // For backward compatibility
-            'min_color' => 'nullable|integer|min:1',
+            'min_color' => 'required_if:type,b2b_b2c|integer|min:1',
             'stock_b2b' => 'nullable|integer|min:0',
             'stock_b2c' => 'nullable|integer|min:0',
         ];
@@ -115,11 +115,11 @@ class ProductStoreRequest extends ResponseShape
                             }
                         }
                     }
-
-                    // Validate min_color
-                    if (!isset($this->min_color) || $this->min_color < 1) {
-                        $validator->errors()->add('min_color', 'The min color field is required and must be at least 1.');
-                    }
+//
+//                    // Validate min_color
+//                    if (!isset($this->min_color) || $this->min_color < 1) {
+//                        $validator->errors()->add('min_color', 'The min color field is required and must be at least 1.');
+//                    }
 
                     // Validate colors if provided
                     if ($this->has('colors') && is_array($this->colors)) {
@@ -155,13 +155,13 @@ class ProductStoreRequest extends ResponseShape
                         }
 
                         // Validate min_color vs colors count
-                        if ($this->has('min_color') && $this->has('colors')) {
-                            $colorsCount = count($this->colors);
-                            $minColor = $this->min_color;
-                            if ($minColor > $colorsCount) {
-                                $validator->errors()->add('min_color', 'The min color must be equal to or less than the number of colors (' . $colorsCount . ').');
-                            }
-                        }
+//                        if ($this->has('min_color') && $this->has('colors')) {
+//                            $colorsCount = count($this->colors);
+//                            $minColor = $this->min_color;
+//                            if ($minColor > $colorsCount) {
+//                                $validator->errors()->add('min_color', 'The min color must be equal to or less than the number of colors (' . $colorsCount . ').');
+//                            }
+//                        }
                     }
                 } else {
                     if ($this->input('type') == 'b2b') {
@@ -188,10 +188,5 @@ class ProductStoreRequest extends ResponseShape
                 // Ignore errors in validation callback
             }
         });
-    }
-
-    private function checkWholeSalePrice()
-    {
-
     }
 }
