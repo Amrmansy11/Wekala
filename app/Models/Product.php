@@ -216,6 +216,6 @@ class Product extends Model implements HasMedia, AuditableContract
 
     public function scopeB2BB2C(Builder $query): Builder
     {
-        return $query->where('type', 'b2b_b2c');
+        return $query->whereIn('type', ['b2b_b2c', 'b2c']);
     }
 }
