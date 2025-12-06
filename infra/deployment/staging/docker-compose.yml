@@ -13,7 +13,6 @@ services:
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
         volumes:
             - '../../..:/var/www/html'
-            - '/root/.ssh:/root/.ssh'
         networks:
             sail:
                 ipv4_address: 172.18.13.2
