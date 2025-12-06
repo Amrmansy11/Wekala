@@ -3,6 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Http\Resources\Consumer\Cart\CartShippingAddressesResource;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Termwind\Components\Hr;
 use Laravel\Passport\HasApiTokens;
 use Database\Factories\UserFactory;
@@ -20,6 +23,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property string $password
  * @property string $birthday
  * @property string $phone
+ * @property-read Collection<CartShippingAddress> $addresses
  */
 class User extends Authenticatable
 {
@@ -71,5 +75,11 @@ class User extends Authenticatable
     public function feeds(): HasMany
     {
         return $this->hasMany(Feed::class);
+    }
+
+
+    public function addresses(): MorphMany
+    {
+        return $this->morphMany(CartShippingAddress::class, 'addressable');
     }
 }

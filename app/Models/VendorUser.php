@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\HasMedia;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
@@ -22,6 +23,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property Carbon $updated_at
  * @property boolean $is_active
  * @property Vendor $vendor
+ * @property-read Collection<CartShippingAddress> $addresses
  */
 class VendorUser extends Authenticatable implements HasMedia
 {
@@ -92,5 +94,10 @@ class VendorUser extends Authenticatable implements HasMedia
     public function wishlist() : MorphMany
     {
         return $this->morphMany(Wishlist::class, 'userable');
+    }
+
+    public function addresses(): MorphMany
+    {
+        return $this->morphMany(CartShippingAddress::class, 'addressable');
     }
 }

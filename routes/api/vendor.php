@@ -129,6 +129,7 @@ Route::middleware('auth:vendor-api')->group(function () {
             Route::get('/', [CartController::class, 'index']);
             Route::post('/', [CartController::class, 'store']);
             Route::post('/shipping-address', [CartController::class, 'shippingAddress']);
+            Route::get('/shipping-address', [CartController::class, 'shippingAddresses']);
             Route::delete('item/{id}', [CartController::class, 'destroy']);
             Route::delete('item/all/{vendor_id}', [CartController::class, 'destroyAll']);
         });
