@@ -13,11 +13,14 @@ services:
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
         volumes:
             - '../../..:/var/www/html'
+            - '/root/.ssh:/root/.ssh'
         networks:
             sail:
                 ipv4_address: 172.18.13.2
         depends_on:
             - db
+        command: "chown -R root:root /root/.ssh"
+
     db:
         image: 'mysql:8.0'
         restart: always
