@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendor\API;
 
 use App\Models\VendorUser;
 use Illuminate\Http\JsonResponse;
+use App\Models\CartShippingAddress;
 use App\Http\Resources\VendorUserResource;
 use App\Http\Resources\BranchSwitchResource;
 use App\Http\Resources\BranchDetailsResource;
@@ -82,6 +83,17 @@ class VendorBranchController extends VendorController
                 'ar' => $data['description'] ?? null,
             ],
             'status' => 'pending'
+        ]);
+
+        CartShippingAddress::query()->create([
+            'addressable_type' => VendorUser::class,
+            'addressable_id' => $vendorUser->id,
+            'address_type' => $request->input('address_type') ?? 'Home',
+            'recipient_name' => $vendorUser->name,
+            'recipient_phone' => $vendorUser->phone,
+            'full_address' => $vendor->address,
+            'state_id' => $vendor->state_id,
+            'city_id' => $vendor->city_id,
         ]);
         if ($request->hasFile('logo')) {
             $vendor->addMedia($request->file('logo'))
