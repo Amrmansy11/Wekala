@@ -12,3 +12,6 @@ up-stg:
 
 up-stg-build:
 	$(DOCKER_COMPOSE) -f $(STAGING_COMPOSE_FILE) up -d --build
+
+migrate-stg:
+	$(DOCKER_COMPOSE) -f $(STAGING_COMPOSE_FILE) exec app php artisan migrate
