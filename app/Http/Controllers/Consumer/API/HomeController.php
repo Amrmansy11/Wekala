@@ -43,8 +43,7 @@ class HomeController extends ConsumerController
         $flashSales = $this->flashSaleRepository->query()
             ->where('type', 'flash_sale')
             ->where('type_elwekala', 'consumer')
-            ->with('product')
-            ->wherehas('product', function ($q) {
+            ->withWhereHas('product', function ($q) {
                 $q->B2BB2C();
             })
             ->take(10)
@@ -53,11 +52,8 @@ class HomeController extends ConsumerController
             ->query()
             ->whereNot('type', 'flash_sale')
             ->where('type_elwekala', 'consumer')
-            ->with(['product' => function ($query) {
-                $query->select('id', 'name');
-            }])
-            ->wherehas('product', function ($q) {
-                $q->B2BB2C();
+            ->withWhereHas('product', function ($query) {
+                $query->select('id', 'name')->B2BB2C();
             })
             ->get()
             ->groupBy('type');
@@ -123,10 +119,11 @@ class HomeController extends ConsumerController
             ->query()
             ->where('type', $types[$slug])
             ->where('type_elwekala', 'consumer')
-            ->whereHas('product', function ($q) use ($filters) {
-                $q->filter($filters)->B2BB2C();
-            })
-            ->with(['product.vendor']);
+            ->withWhereHas('product', function ($q) use ($filters) {
+                $q->B2BB2C()
+                  ->with('variants')
+                  ->filter($filters);
+            });
 
         //        if ($slug === 'flash-sale') {
         $products = $query->paginate($perPage);

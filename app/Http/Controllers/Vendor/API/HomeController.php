@@ -38,16 +38,19 @@ class HomeController extends VendorController
     {
         $flashSales = $this->flashSaleRepository->query()
             ->where('type', 'flash_sale')
-            ->with('product')
-            ->has('product')
+            ->where('type_elwekala', 'seller')
+            ->withWhereHas('product', function ($q) {
+                $q->sellersOnly();
+            })
             ->take(10)
             ->get();
         $collections = $this->elwekalaCollectionRepository
             ->query()
+            ->where('type_elwekala', 'seller')
             ->whereNot('type', 'flash_sale')
-            ->with(['product' => function ($query) {
-                $query->select('id', 'name');
-            }])
+            ->withWhereHas('product', function ($query) {
+                $query->select('id', 'name')->sellersOnly();
+            })
             ->get()
             ->groupBy('type');
 
@@ -103,12 +106,13 @@ class HomeController extends VendorController
         }
         $query = $this->elwekalaCollectionRepository
             ->query()
+            ->where('type_elwekala', 'seller')
             ->where('type', $types[$slug])
-            ->whereHas('product', function ($q) use ($filters) {
-                $q->filter($filters);
-            })
-            ->with(['product.vendor'])
-            ->has('product');
+            ->withWhereHas('product', function ($q) use ($filters) {
+                $q->sellersOnly()
+                    ->with(['variants'])
+                    ->filter($filters);
+            });
 
         //        if ($slug === 'flash-sale') {
         $products = $query->paginate($perPage);
@@ -250,7 +254,9 @@ class HomeController extends VendorController
 
     public function getSliders(): JsonResponse
     {
-        $sliders = $this->sliderRepository->query()->get();
+        $sliders = $this->sliderRepository->query()
+        ->where('type', 'seller')
+        ->get();
         return response()->json([
             'data' => HomeSliderResource::collection($sliders)
         ]);
@@ -277,6 +283,7 @@ class HomeController extends VendorController
             return response()->json(['message' => 'Slider not found'], 404);
         }
         $products = $slider->products()
+            ->sellersOnly()
             ->with(['variants'])
             ->filter($filters)
             ->paginate($perPage);
