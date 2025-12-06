@@ -146,4 +146,9 @@ class Vendor extends Model implements HasMedia, AuditableContract
     {
         return $this->morphMany(Offer::class, 'creatable');
     }
+
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(Discount::class, 'vendor_id');
+    }
 }

@@ -31,6 +31,8 @@ Route::prefix('home')->group(function () {
     Route::get('sliders', [HomeController::class, 'getSliders'])->name('consumer.sliders');
     Route::get('slider-details/{id}', [HomeController::class, 'getSliderDetails'])->name('consumer.slider-details');
     Route::get('{slug}', [HomeController::class, 'getByCategory'])->name('consumer.category');
+    Route::get('products/{brand}', [HomeController::class, 'getBrandProductsById']);
+    Route::get('products/{sub_sub_category_id}', [HomeController::class, 'getSubSubCategoryProductsById']);
 });
 Route::prefix('discounts')->group(function () {
     Route::get('/', [DiscountController::class, 'index'])->name('consumer.discounts.index');
@@ -73,7 +75,7 @@ Route::middleware('auth:consumer-api')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::resource('wishlists', WishlistController::class)->only(['index', 'store'])->names('consumer.wishlists');
     Route::resource('feeds', FeedController::class)->except('show')->names('consumer.feeds');
-    
+
     Route::prefix('store')->group(function () {
         Route::post('{id}/toggle_follow', [StoreController::class, 'toggleFollow']);
     });

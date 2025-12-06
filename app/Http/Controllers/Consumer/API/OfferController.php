@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Consumer\API;
 
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Repositories\Vendor\OfferRepository;
+use Illuminate\Support\Facades\DB;
+use App\Repositories\Vendor\VendorRepository;
 use App\Http\Controllers\Consumer\API\ConsumerController;
-use App\Http\Resources\Consumer\Offer\OfferDetailsResource;
-use App\Http\Resources\Consumer\Offer\OfferListingResource;
 use App\Http\Resources\Consumer\Offer\OfferProductResource;
+use App\Http\Resources\Consumer\Offer\VendorsOfferListingResource;
 
 class OfferController extends ConsumerController
 {
     public function __construct(
-        protected OfferRepository $offerRepository
+        protected VendorRepository $vendorRepository,
     ) {}
 
     /**
@@ -21,25 +22,39 @@ class OfferController extends ConsumerController
      */
     public function index(Request $request): JsonResponse
     {
-        $type = $request->get('type');
-        $name = $request->get('name');
 
-        $query = $this->offerRepository->query()
-            ->with(['products' => function ($query) {
-                $query->take(3); // Preview 3 products for listing
-            }])
-            ->wherehas('products', function ($q) {
-                $q->B2BB2C();
+        $type = $request->get('type');
+        $perPage = $request->integer('per_page', 15);
+        $vendors = $this->vendorRepository->query()
+            ->select('vendors.id', 'vendors.store_name')
+            ->withCount('followers')
+            ->whereHas('offers', function ($q) use ($type) {
+                $q->status('active')
+                    ->when($type, fn($q) => $q->where('type', $type))
+                    ->whereHas('products');
             })
-            ->status('active')
-            ->when($type, function ($q) use ($type) {
-                $q->where('type', $type);
-            })->when($name, function ($q) use ($name) {
-                $q->where('name', 'like', "%{$name}%");
-            });
-        $offers = $query->get();
+            ->with([
+                'offers' => function ($q) use ($type) {
+                    $q
+                        ->when($type, fn($q) => $q->where('type', $type))
+                        ->orderBy('created_at', 'desc')
+                        ->limit(10);
+                },
+                'offers.products' => function ($q) {
+                    $q->B2BB2C()
+                        ->limit(3);
+                }
+            ])
+            ->paginate($perPage);
         return response()->json([
-            'data' => OfferListingResource::collection($offers),
+            'data' => VendorsOfferListingResource::collection($vendors),
+            'pagination' => [
+                'currentPage' => $vendors->currentPage(),
+                'total' => $vendors->total(),
+                'perPage' => $vendors->perPage(),
+                'lastPage' => $vendors->lastPage(),
+                'hasMorePages' => $vendors->hasMorePages(),
+            ],
         ]);
     }
 
