@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
@@ -26,13 +27,14 @@ class CartShippingAddress extends Model implements AuditableContract
     use HasFactory, SoftDeletes, Auditable;
 
     protected $fillable = [
-        'cart_id',
         'state_id',
         'city_id',
         'address_type',
         'recipient_name',
         'recipient_phone',
         'full_address',
+        'addressable_id',
+        'addressable_type',
     ];
 
     public function cart(): BelongsTo
@@ -48,6 +50,11 @@ class CartShippingAddress extends Model implements AuditableContract
     public function state(): BelongsTo
     {
         return $this->belongsTo(State::class);
+    }
+
+    public function addressable(): MorphTo
+    {
+        return $this->morphTo();
     }
 }
 

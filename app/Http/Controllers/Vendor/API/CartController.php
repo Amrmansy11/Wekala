@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Vendor\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Vendor\Api\Cart\AddToCartRequest;
 use App\Http\Requests\Vendor\Api\Cart\ShippingAddressRequest;
+use App\Http\Resources\Consumer\Cart\CartShippingAddressesResource;
 use App\Models\Cart;
 use App\Models\CartShippingAddress;
+use App\Models\Vendor;
 use App\Models\VendorUser;
 use App\Repositories\Vendor\CartRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -35,23 +38,26 @@ class CartController extends Controller
         return response()->json(['data' => $cart->load('items')]);
     }
 
+    public function shippingAddresses(): JsonResource
+    {
+        $vendor_id = Auth::guard('vendor-api')->user()->vendor_id;
+        $vendorUsers = VendorUser::query()->where('vendor_id', $vendor_id)->pluck('id')->toArray();
+        $addresses = CartShippingAddress::query()->whereIn('addressable_id', $vendorUsers)
+            ->where('addressable_type', VendorUser::class)
+            ->get();
+        return CartShippingAddressesResource::collection($addresses);
+
+    }
+
     public function shippingAddress(ShippingAddressRequest $request): JsonResponse
     {
         /** @var VendorUser $vendorUser */
         $vendorUser = Auth::guard('vendor-api')->user();
 
-        $cart = Cart::query()
-            ->where([
-                'vendor_id' => $vendorUser->vendor_id,
-                'status' => 'open',
-            ])->first();
-        if (!$cart) {
-            throw ValidationException::withMessages([
-                'cart' => [__('validation.custom.cart.empty')],
-            ]);
-        }
         $shippingAddress = CartShippingAddress::query()->updateOrCreate([
-            'cart_id' => $cart->id,
+            'addressable_type' => VendorUser::class,
+            'addressable_id' => $vendorUser->id,
+            'address_type' => $request->input('address_type'),
         ], [
             'address_type' => $request->input('address_type'),
             'recipient_name' => $request->input('recipient_name'),

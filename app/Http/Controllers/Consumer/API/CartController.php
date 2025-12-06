@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Consumer\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Consumer\Api\Cart\AddToCartRequest;
 use App\Http\Requests\Consumer\Api\Cart\ShippingAddressRequest;
+use App\Http\Resources\Consumer\Cart\CartShippingAddressesResource;
 use App\Models\Cart;
 use App\Models\CartShippingAddress;
 use App\Models\User;
 use App\Repositories\Consumer\CartRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -35,24 +37,22 @@ class CartController extends Controller
         return response()->json(['data' => $cart->load('items')]);
     }
 
+    public function shippingAddresses(): JsonResource
+    {
+        /** @var User $user */
+        $user = Auth::guard('consumer-api')->user();
+        return CartShippingAddressesResource::collection($user->addresses);
+    }
+
     public function shippingAddress(ShippingAddressRequest $request): JsonResponse
     {
         /** @var User $user */
         $user = Auth::guard('consumer-api')->user();
-        $cart = Cart::query()
-            ->where([
-                'user_id' => $user->id,
-                'status' => 'open',
-            ])->first();
-        if (!$cart) {
-            throw ValidationException::withMessages([
-                'cart' => [__('validation.custom.cart.empty')],
-            ]);
-        }
         $shippingAddress = CartShippingAddress::query()->updateOrCreate([
-            'cart_id' => $cart->id,
-        ], [
+            'addressable_type' => User::class,
+            'addressable_id' => $user->id,
             'address_type' => $request->input('address_type'),
+        ], [
             'recipient_name' => $request->input('recipient_name'),
             'recipient_phone' => $request->input('recipient_phone'),
             'full_address' => $request->input('full_address'),
