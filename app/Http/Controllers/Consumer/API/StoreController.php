@@ -19,7 +19,6 @@ use App\Http\Controllers\Consumer\API\ConsumerController;
 use App\Http\Resources\Consumer\Store\StoreBrandResource;
 use App\Http\Resources\Consumer\Gifts\GiftListingResource;
 use App\Http\Resources\Consumer\Store\OffersStoreResource;
-use App\Http\Resources\Consumer\Store\PointListingResource;
 use App\Http\Resources\Consumer\Store\FeedStoreInfoResource;
 use App\Http\Resources\Consumer\Store\StoreProductsResource;
 use App\Http\Resources\Consumer\Store\VouchersStoreResource;

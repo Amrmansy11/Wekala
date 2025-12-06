@@ -66,6 +66,7 @@ class HomeController extends VendorController
         $brands = $this->brandRepository->query()
             ->where('vendor_id', auth()->check() ? AppHelper::getVendorId() : null)->orWhereNull('vendor_id')
             ->where('is_active', true)
+            ->has('products')
             ->withCount('products')
             ->orderByDesc('products_count')
             ->take(10)
@@ -227,6 +228,7 @@ class HomeController extends VendorController
         $brands = $this->brandRepository->query()
             ->where('vendor_id', auth()->check() ? AppHelper::getVendorId() : null)
             ->orWhereNull('vendor_id')
+            ->has('products')
             ->where('is_active', true)
             ->get();
         return response()->json(['data' => BrandResource::collection($brands)]);
@@ -255,8 +257,8 @@ class HomeController extends VendorController
     public function getSliders(): JsonResponse
     {
         $sliders = $this->sliderRepository->query()
-        ->where('type', 'seller')
-        ->get();
+            ->where('type', 'seller')
+            ->get();
         return response()->json([
             'data' => HomeSliderResource::collection($sliders)
         ]);

@@ -68,11 +68,8 @@ class HomeController extends ConsumerController
         })->values();
 
         $brands = $this->brandRepository->query()
-            ->where('vendor_id', auth()->check() ? AppHelper::getVendorId() : null)->orWhereNull('vendor_id')
             ->where('is_active', true)
-            ->whereHas('products', function ($q) {
-                $q->B2BB2C();
-            })
+            ->has('products')
             ->withCount('products')
             ->orderByDesc('products_count')
             ->take(10)
@@ -121,8 +118,8 @@ class HomeController extends ConsumerController
             ->where('type_elwekala', 'consumer')
             ->withWhereHas('product', function ($q) use ($filters) {
                 $q->B2BB2C()
-                  ->with('variants')
-                  ->filter($filters);
+                    ->with('variants')
+                    ->filter($filters);
             });
 
         //        if ($slug === 'flash-sale') {
@@ -147,7 +144,7 @@ class HomeController extends ConsumerController
         $products = $this->productRepository->query()
             ->inRandomOrder()
             ->B2BB2C()
-            ->with('variants')
+            ->with(['variants', 'discounts'])
             ->paginate($perPage);
         return response()->json([
             'data' => ProductResource::collection($products),
@@ -207,6 +204,55 @@ class HomeController extends ConsumerController
                 'lastPage' => $products->lastPage(),
                 'hasMorePages' => $products->hasMorePages(),
             ],
+        ]);
+    }
+    public function getBrandProductsById(Request $request, int $id): JsonResponse
+    {
+        $perPage = $request->integer('per_page', 15);
+        $filters = [
+            'search'      => $request->string('search'),
+            'category_id' => $request->array('category_id', []),
+            'size_id'     => $request->array('size_id', []),
+            'color_id'    => $request->array('color_id', []),
+            'material_id' => $request->array('material_id', []),
+            'tag_id'      => $request->array('tag_id', [])
+
+        ];
+        $products = $this->brandRepository->find($id)
+            ->products()
+            ->B2BB2C()
+            ->with(['variants'])
+            ->filter($filters)
+            ->paginate($perPage);
+        return response()->json([
+            'data' => ProductResource::collection($products),
+            'pagination' => [
+                'currentPage' => $products->currentPage(),
+                'total' => $products->total(),
+                'perPage' => $products->perPage(),
+                'lastPage' => $products->lastPage(),
+                'hasMorePages' => $products->hasMorePages(),
+            ]
+        ]);
+    }
+
+      public function getSubSubCategoryProductsById(Request $request, int $id): JsonResponse
+    {
+        $perPage = $request->integer('per_page', 15);
+        $products = $this->productRepository->query()
+            ->where('sub_sub_category_id', $id)
+            ->B2BB2C()
+            ->with(['variants'])
+            ->paginate($perPage);
+        return response()->json([
+            'data' => ProductResource::collection($products),
+            'pagination' => [
+                'currentPage' => $products->currentPage(),
+                'total' => $products->total(),
+                'perPage' => $products->perPage(),
+                'lastPage' => $products->lastPage(),
+                'hasMorePages' => $products->hasMorePages(),
+            ]
         ]);
     }
 }
