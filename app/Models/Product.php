@@ -44,6 +44,11 @@ class Product extends Model implements HasMedia, AuditableContract
 {
     use HasFactory, Auditable, InteractsWithMedia;
 
+    const TYPE_B2B = 'b2b';
+    const TYPE_B2C = 'b2c';
+    const TYPE_B2B_B2C = 'b2b_b2c';
+    const TYPE_SELLERS_ONLY = self::TYPE_B2B_B2C;
+
     protected $fillable = [
         'name',
         'description',
@@ -217,5 +222,10 @@ class Product extends Model implements HasMedia, AuditableContract
     public function scopeB2BB2C(Builder $query): Builder
     {
         return $query->whereIn('type', ['b2b_b2c', 'b2c']);
+    }
+
+    public function scopeSellersOnly(Builder $query): Builder
+    {
+        return $query->where('type', self::TYPE_SELLERS_ONLY);
     }
 }

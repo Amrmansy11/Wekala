@@ -142,6 +142,7 @@ class HomeController extends VendorController
         ];
         $products = $this->brandRepository->find($id)
             ->products()
+            ->sellersOnly()
             ->with(['variants'])
             ->filter($filters)
             ->paginate($perPage);
@@ -161,6 +162,7 @@ class HomeController extends VendorController
         $perPage = $request->integer('per_page', 15);
         $products = $this->productRepository->query()
             ->where('sub_sub_category_id', $id)
+            ->sellersOnly()
             ->with(['variants'])
             ->paginate($perPage);
         return response()->json([
@@ -231,6 +233,7 @@ class HomeController extends VendorController
         $perPage = $request->integer('per_page', 15);
         $products = $this->productRepository->query()
             ->inRandomOrder()
+            ->sellersOnly()
             ->with('variants')
             ->paginate($perPage);
         return response()->json([
@@ -297,6 +300,7 @@ class HomeController extends VendorController
         // Get products created in the last 15 days, ordered by latest first
         $products = $this->productRepository->query()
             ->where('created_at', '>=', now()->subDays(15))
+            ->sellersOnly()
             ->with(['variants', 'brand', 'category'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
