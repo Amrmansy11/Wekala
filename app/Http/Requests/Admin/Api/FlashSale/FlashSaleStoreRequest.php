@@ -7,6 +7,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * @property int $product_id
+ * @property string $type_elwekala
  */
 class FlashSaleStoreRequest extends ResponseShape
 {
@@ -21,7 +22,10 @@ class FlashSaleStoreRequest extends ResponseShape
             'product_id' => [
                 'required',
                 'integer',
-                Rule::unique('elwekala_collections', 'product_id'),
+                Rule::unique('elwekala_collections', 'product_id')
+                    ->where(function ($query) {
+                        $query->where('type', 'flash_sale');
+                    }),
                 Rule::exists('products', 'id')
                     ->where(function ($query) {
                         $query->whereIn('vendor_id', function ($sub) {
@@ -31,6 +35,7 @@ class FlashSaleStoreRequest extends ResponseShape
                         });
                     }),
             ],
+            'type_elwekala' => 'required|in:consumer,seller',
         ];
     }
 }
