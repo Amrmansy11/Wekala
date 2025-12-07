@@ -30,11 +30,11 @@ class ProductController extends Controller
     {
         $perPage = $request->integer('per_page', 15);
         $status = $request->get('status');
-        $type = $request->get('type'); // Filter by product type
 
         $query = $this->productRepository->query()
             ->where('vendor_id', AppHelper::getVendorId())
-            ->with('category', 'brand', 'tags', 'sizes', 'variants');
+            ->sellersOnly()
+            ->with('category', 'brand', 'tags', 'sizes', 'variants', 'reviews','images');
 
         // Apply status filter if provided
         if ($status) {
@@ -45,13 +45,7 @@ class ProductController extends Controller
             }
         }
 
-        // Apply type filter if provided (b2b, b2c, b2b_b2c)
-        if ($type && in_array($type, ['b2b', 'b2c', 'b2b_b2c'])) {
-            $query->where('type', $type);
-        }
-
         $products = $query->paginate($perPage);
-
         return response()->json([
             'data' => ProductResource::collection($products),
             'pagination' => [
