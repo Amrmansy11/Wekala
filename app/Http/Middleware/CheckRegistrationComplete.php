@@ -12,8 +12,8 @@ class CheckRegistrationComplete
     {
         $user = $request->user();
         $vendor = $user->vendor;
-        $hasNationalId = $vendor->hasMedia('vendor_national_id');
-        $hasTaxCard    = $vendor->hasMedia('vendor_tax_card');
+        // $hasNationalId = $vendor->hasMedia('vendor_national_id');
+        // $hasTaxCard    = $vendor->hasMedia('vendor_tax_card');
         if (!$user) {
             return response()->json([
                 'status' => 'unauthorized',
