@@ -34,7 +34,8 @@ class ProductController extends Controller
         $query = $this->productRepository->query()
             ->where('vendor_id', AppHelper::getVendorId())
             ->sellersOnly()
-            ->with('category', 'brand', 'tags', 'sizes', 'variants', 'reviews','images');
+            ->with('category', 'brand', 'tags', 'sizes', 'variants', 'reviews')
+            ->withCount('wishlists as favorites_count');
 
         // Apply status filter if provided
         if ($status) {

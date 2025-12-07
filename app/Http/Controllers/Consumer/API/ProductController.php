@@ -54,7 +54,7 @@ class ProductController extends ConsumerController
 
     public function show($id): JsonResponse
     {
-        $product = $this->productRepository->show($id, 'consumer-api', 'b2b_b2c');
+        $product = $this->productRepository->show($id, 'consumer-api');
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
