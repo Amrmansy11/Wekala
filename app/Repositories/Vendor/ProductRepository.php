@@ -182,16 +182,13 @@ class ProductRepository extends BaseRepository
         });
     }
 
-    public function show($id, $typeGuard = 'vendor-api', $type = null): ?Product
+    public function show($id, $typeGuard = 'vendor-api'): ?Product
     {
         $product = $this->model->query()
             ->withExists(['wishlists as is_fav' => function ($q) use ($typeGuard) {
                 $q->where('userable_id', auth($typeGuard)->id());
                 // ->where('userable_type', get_class(auth($typeGuard)->user()));
             }])
-            ->when($type, function ($q) use ($type) {
-                $q->where('type', $type);
-            })
             ->find($id);
         if (!$product) {
             return null;

@@ -24,7 +24,7 @@ class ProductResource extends JsonResource
             'published_at' => $this->published_at,
             'min_color' => $this->min_color,
             'views' => 5000,
-            'favorites' => 25000,
+            'favorites' => $this->favorites_count,
             'sales' => 266000,
             'colors' => $variants ? ColorsResource::collection($variants) : [],
             'gallery' => $gallery,
