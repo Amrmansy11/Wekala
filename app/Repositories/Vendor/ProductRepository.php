@@ -74,6 +74,9 @@ class ProductRepository extends BaseRepository
                 }
                 if (!empty($data['colors']) && is_array($data['colors'])) {
                     foreach ($data['colors'] as $colorData) {
+                        if($data['type'] == 'b2c'){
+                            $colorData['quantity_b2c'] = $colorData['bags'];
+                        }
                         /** @var ProductVariant $variant */
                         $variant = $product->variants()->create([
                             'color' => $colorData['color'],
@@ -254,6 +257,9 @@ class ProductRepository extends BaseRepository
                     $product->variants()->delete();
 
                     foreach ($data['colors'] as $colorData) {
+                        if($data['type'] == 'b2c'){
+                            $colorData['quantity_b2c'] = $colorData['bags'];
+                        }
                         /** @var ProductVariant $variant */
                         $variant = $product->variants()->create([
                             'color' => $colorData['color'],
