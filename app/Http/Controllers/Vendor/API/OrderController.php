@@ -21,7 +21,7 @@ class OrderController extends Controller
     public function getSellerOrders(Request $request): JsonResponse
     {
         $perPage = $request->integer('per_page', 15);
-        $status = $request->string('status', null);
+        $status = $request->string('status', 'pending');
         $orders = $this->orderRepository->mySellerOrders($perPage, $status);
         return response()->json([
             'data' => OrderResource::collection($orders),
