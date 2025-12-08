@@ -8,6 +8,7 @@ use App\Repositories\Vendor\VendorRepository;
 use App\Repositories\Vendor\DiscountRepository;
 use App\Http\Controllers\Consumer\API\ConsumerController;
 use App\Http\Resources\Consumer\Discount\DiscountDetailsResource;
+use App\Http\Resources\Consumer\Discount\DiscountProductResource;
 use App\Http\Resources\Consumer\Discount\VendorsDiscountListingResource;
 
 class DiscountController extends ConsumerController
@@ -96,9 +97,9 @@ class DiscountController extends ConsumerController
         $products = $productsQuery->paginate($perPage);
 
         return response()->json([
-            'data' => new DiscountDetailsResource($discount),
+            'discount' => new DiscountDetailsResource($discount),
             'products' => [
-                'data' => \App\Http\Resources\Consumer\Discount\DiscountProductResource::collection($products),
+                'data' => DiscountProductResource::collection($products),
                 'pagination' => [
                     'currentPage' => $products->currentPage(),
                     'total' => $products->total(),

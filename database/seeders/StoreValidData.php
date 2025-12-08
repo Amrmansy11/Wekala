@@ -4,9 +4,11 @@ namespace Database\Seeders;
 
 use App\Models\Feed;
 use App\Models\Offer;
+use App\Models\Point;
 use App\Models\Vendor;
 use App\Models\Product;
 use App\Models\Voucher;
+use App\Models\Discount;
 use App\Models\VendorUser;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -15,14 +17,14 @@ class StoreValidData extends Seeder
 {
     public function run(): void
     {
-        // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        // VendorUser::query()->truncate();
-        // Vendor::query()->truncate();
-        // Product::query()->truncate();
-        // Voucher::query()->truncate();
-        // Offer::query()->truncate();
-        // Feed::query()->truncate();
-        // DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        VendorUser::query()->truncate();
+        Vendor::query()->truncate();
+        Product::query()->truncate();
+        Voucher::query()->truncate();
+        Offer::query()->truncate();
+        Feed::query()->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         $vendorUser = VendorUser::query()->create([
             'name' => 'H&M',
             'email' => 'h&m@gmail.com',
@@ -73,10 +75,16 @@ class StoreValidData extends Seeder
             'creatable_type' => Vendor::class,
             'creatable_id' => $vendor->id,
         ]);
-
+        Discount::factory()->count(10)->withProducts(4)->create([
+            'vendor_id' => $vendor->id,
+        ]);
         Offer::factory()->count(10)->create([
             'creatable_type' => Vendor::class,
             'creatable_id' => $vendor->id,
+        ]);
+
+        Point::factory()->count(10)->withProducts(4)->create([
+            'vendor_id' => $vendor->id,
         ]);
 
         Feed::factory()->count(10)->create([

@@ -40,6 +40,7 @@ Route::prefix('discounts')->group(function () {
 });
 Route::prefix('points')->group(function () {
     Route::get('/', [PointController::class, 'index'])->name('consumer.points.index');
+    Route::get('{id}', [PointController::class, 'show'])->name('consumer.points.show');
 });
 Route::prefix('offers')->group(function () {
     Route::get('/', [OfferController::class, 'index'])->name('consumer.offers.index');

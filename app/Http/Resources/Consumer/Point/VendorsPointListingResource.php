@@ -13,6 +13,8 @@ class VendorsPointListingResource extends JsonResource
             'id' => $this->id,
             'name' => $this->store_name,
             'followers' => $this->followers_count,
+            'image' => $this->getFirstMediaUrl('vendor_logo'),
+            'date' => optional($this->created_at)->format('d M'),
             'points' => PointListingResource::collection($this->whenLoaded('points')),
         ];
     }

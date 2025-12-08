@@ -81,4 +81,9 @@ class Order extends Model implements AuditableContract
     {
         return $this->belongsTo(Order::class, 'parent_id');
     }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

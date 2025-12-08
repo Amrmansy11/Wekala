@@ -13,6 +13,8 @@ class VendorsOfferListingResource extends JsonResource
             'id' => $this->id,
             'name' => $this->store_name,
             'followers_count' => $this->followers_count,
+            'image' => $this->getFirstMediaUrl('vendor_logo'),
+            'date' => optional($this->created_at)->format('d M'),
             'offers' => OfferListingResource::collection($this->whenLoaded('offers')),
 
         ];

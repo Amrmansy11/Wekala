@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Consumer\API;
 
-use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
+use App\Repositories\Vendor\OfferRepository;
 use App\Repositories\Vendor\VendorRepository;
 use App\Http\Controllers\Consumer\API\ConsumerController;
+use App\Http\Resources\Consumer\Offer\OfferDetailsResource;
 use App\Http\Resources\Consumer\Offer\OfferProductResource;
 use App\Http\Resources\Consumer\Offer\VendorsOfferListingResource;
 
@@ -15,6 +15,7 @@ class OfferController extends ConsumerController
 {
     public function __construct(
         protected VendorRepository $vendorRepository,
+        protected OfferRepository $offerRepository
     ) {}
 
     /**
@@ -92,14 +93,16 @@ class OfferController extends ConsumerController
         $products = $productsQuery->paginate($perPage);
 
         return response()->json([
-            // 'data' => new OfferDetailsResource($offer),
-            'data' => OfferProductResource::collection($products),
-            'pagination' => [
-                'currentPage' => $products->currentPage(),
-                'total' => $products->total(),
-                'perPage' => $products->perPage(),
-                'lastPage' => $products->lastPage(),
-                'hasMorePages' => $products->hasMorePages(),
+            'offer' => new OfferDetailsResource($offer),
+            'products' => [
+                'data' => OfferProductResource::collection($products),
+                'pagination' => [
+                    'currentPage' => $products->currentPage(),
+                    'total' => $products->total(),
+                    'perPage' => $products->perPage(),
+                    'lastPage' => $products->lastPage(),
+                    'hasMorePages' => $products->hasMorePages(),
+                ],
             ],
         ]);
     }
