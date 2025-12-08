@@ -186,17 +186,17 @@ class OrderRepository extends BaseRepository
                     ->where('cart_id', $cart->id)
                     ->where('vendor_id', (int)$sellerVendorId)
                     ->delete();
-                if ($cart->shippingAddress) {
-                    OrderShippingAddress::query()->create([
-                        'order_id' => $order->id,
-                        'address_type' => $cart->shippingAddress->address_type,
-                        'recipient_name' => $cart->shippingAddress->recipient_name,
-                        'recipient_phone' => $cart->shippingAddress->recipient_phone,
-                        'full_address' => $cart->shippingAddress->full_address,
-                        'state_id' => $cart->shippingAddress->state_id,
-                        'city_id' => $cart->shippingAddress->city_id,
-                    ]);
-                }
+                // if (isset($cart->shippingAddress) && $cart->shippingAddress) {
+                //     OrderShippingAddress::query()->create([
+                //         'order_id' => $order->id,
+                //         'address_type' => $cart->shippingAddress->address_type,
+                //         'recipient_name' => $cart->shippingAddress->recipient_name,
+                //         'recipient_phone' => $cart->shippingAddress->recipient_phone,
+                //         'full_address' => $cart->shippingAddress->full_address,
+                //         'state_id' => $cart->shippingAddress->state_id,
+                //         'city_id' => $cart->shippingAddress->city_id,
+                //     ]);
+                // }
                 $ordersCreated->push($order->load('items'));
             }
 
