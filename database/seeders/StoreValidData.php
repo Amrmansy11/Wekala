@@ -66,7 +66,7 @@ class StoreValidData extends Seeder
                 ->toMediaCollection($collection);
         }
 
-        Product::factory()->count(100)->create([
+        Product::factory()->count(10)->create([
             'vendor_id' => $vendor->id,
             'category_id' => 32,
         ]);
