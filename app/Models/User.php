@@ -82,4 +82,9 @@ class User extends Authenticatable
     {
         return $this->morphMany(CartShippingAddress::class, 'addressable');
     }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 }

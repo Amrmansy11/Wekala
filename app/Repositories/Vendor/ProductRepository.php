@@ -74,6 +74,9 @@ class ProductRepository extends BaseRepository
                 }
                 if (!empty($data['colors']) && is_array($data['colors'])) {
                     foreach ($data['colors'] as $colorData) {
+                        if($data['type'] == 'b2c'){
+                            $colorData['quantity_b2c'] = $colorData['bags'];
+                        }
                         /** @var ProductVariant $variant */
                         $variant = $product->variants()->create([
                             'color' => $colorData['color'],
@@ -179,16 +182,13 @@ class ProductRepository extends BaseRepository
         });
     }
 
-    public function show($id, $typeGuard = 'vendor-api', $type = null): ?Product
+    public function show($id, $typeGuard = 'vendor-api'): ?Product
     {
         $product = $this->model->query()
             ->withExists(['wishlists as is_fav' => function ($q) use ($typeGuard) {
                 $q->where('userable_id', auth($typeGuard)->id());
                 // ->where('userable_type', get_class(auth($typeGuard)->user()));
             }])
-            ->when($type, function ($q) use ($type) {
-                $q->where('type', $type);
-            })
             ->find($id);
         if (!$product) {
             return null;
@@ -254,6 +254,9 @@ class ProductRepository extends BaseRepository
                     $product->variants()->delete();
 
                     foreach ($data['colors'] as $colorData) {
+                        if($data['type'] == 'b2c'){
+                            $colorData['quantity_b2c'] = $colorData['bags'];
+                        }
                         /** @var ProductVariant $variant */
                         $variant = $product->variants()->create([
                             'color' => $colorData['color'],

@@ -239,15 +239,22 @@ class OrderRepository extends BaseRepository
         int     $perPage = 15,
         ?string $status = null,
         ?string $sortBy = 'id',
-        string  $sortDirection = 'desc'
+        string  $sortDirection = 'desc',
+        bool $b2bOnly = true,
     ): LengthAwarePaginator {
         /** @var VendorUser $vendorUser */
         $vendorUser = Auth::guard('vendor-api')->user();
 
-        return $this->baseOrderQuery()
+        $query = $this->baseOrderQuery()
             ->where('seller_vendor_id', $vendorUser->vendor_id)
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->orderBy($sortBy, $sortDirection)
+            ->when($status, fn($q) => $q->where('status', $status));
+
+        if ($b2bOnly) {
+            $query->whereNotNull('buyer_vendor_id');
+        }
+
+
+        return $query->orderBy($sortBy, $sortDirection)
             ->paginate($perPage);
     }
 

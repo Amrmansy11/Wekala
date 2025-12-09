@@ -130,8 +130,10 @@ class ProductStoreRequest extends ResponseShape
                             if (!isset($color['bags']) || $color['bags'] < 1) {
                                 $validator->errors()->add('colors.' . $index . '.bags', 'The bags field is required and must be at least 1.');
                             }
-                            if (!isset($color['quantity_b2c']) || $color['quantity_b2c'] < 0) {
-                                $validator->errors()->add('colors.' . $index . '.quantity_b2c', 'The quantity_b2c field is required and must be at least 0.');
+                            if($this->type == 'b2b_b2c') {
+                                if (!isset($color['quantity_b2c']) || $color['quantity_b2c'] < 0) {
+                                    $validator->errors()->add('colors.' . $index . '.quantity_b2c', 'The quantity_b2c field is required and must be at least 0.');
+                                }
                             }
 
                             $type = $this->input('type');

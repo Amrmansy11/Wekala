@@ -61,6 +61,7 @@ Route::middleware('auth:vendor-api')->group(function () {
         Route::resource('brands', BrandController::class)->names('vendor.brands');
         Route::patch('brands/{brand}/toggle', [BrandController::class, 'toggleIsActive']);
         Route::resource('product', ProductController::class)->names('vendor.product');
+        Route::get('product/{product}/sales', [ProductController::class, 'sales'])->name('vendor.product.sales');
         Route::resource('voucher', VoucherController::class)->names('vendor.voucher');
         Route::resource('gifts', GiftController::class)->names('vendor.gifts');
         Route::patch('gifts/{gift}/toggle-archive', [GiftController::class, 'toggleArchive']);

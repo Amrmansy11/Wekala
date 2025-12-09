@@ -78,7 +78,7 @@ class SizeTemplateUpdateRequest extends ResponseShape
             'type' => [
                 'required',
                 'string',
-                Rule::in('pants', 'tshirts'),
+                Rule::in('pants', 'tshirt'),
             ],
 
 
