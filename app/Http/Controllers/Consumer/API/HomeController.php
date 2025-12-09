@@ -20,7 +20,9 @@ use App\Http\Resources\Consumer\Home\SliderResource;
 use App\Http\Resources\Consumer\Home\ProductResource;
 use App\Repositories\Admin\ElwekalaCollectionRepository;
 use App\Http\Controllers\Consumer\API\ConsumerController;
+use App\Http\Resources\Consumer\Home\JustForYouProductResource;
 use App\Http\Resources\Consumer\Home\ElWekalaCollectionsResource;
+use App\Http\Resources\Consumer\Point\PointProductPreviewResource;
 use App\Http\Resources\Consumer\Home\ElWekalaCollectionsHomeResource;
 
 class HomeController extends ConsumerController
@@ -144,10 +146,11 @@ class HomeController extends ConsumerController
         $products = $this->productRepository->query()
             ->inRandomOrder()
             ->B2BB2C()
-            ->with(['variants', 'discounts'])
+            ->with(['variants','orderItems','discounts','points','offer','reviews'])
+            ->withSum('orderItems as sold_count', 'quantity')
             ->paginate($perPage);
         return response()->json([
-            'data' => ProductResource::collection($products),
+            'data' => JustForYouProductResource::collection($products),
             'pagination' => [
                 'currentPage' => $products->currentPage(),
                 'total' => $products->total(),

@@ -70,6 +70,8 @@ class Product extends Model implements HasMedia, AuditableContract
         'vendor_id',
         'parent_id',
         'type',
+        'profit_percentage'
+
     ];
 
     protected $casts = [
@@ -213,7 +215,10 @@ class Product extends Model implements HasMedia, AuditableContract
     {
         return $this->belongsToMany(Discount::class, 'discount_products');
     }
-
+    public function offer(): BelongsToMany
+    {
+        return $this->belongsToMany(Offer::class, 'offer_products');
+    }
     public function wishlists(): HasMany
     {
         return $this->hasMany(Wishlist::class);

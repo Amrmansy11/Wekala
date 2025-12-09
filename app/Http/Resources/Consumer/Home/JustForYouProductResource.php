@@ -1,25 +1,26 @@
 <?php
-
-namespace App\Http\Resources\Consumer\Point;
+namespace App\Http\Resources\Consumer\Home;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PointProductPreviewResource extends JsonResource
+class JustForYouProductResource extends JsonResource
 {
-
     public function toArray($request): array
     {
-        $variants = $this->resource->variants->unique()->values()->all();
-        $gallery = $this->getMedia('images')->map(fn($media) => $media->getUrl())->all();
-        // ✅ Ratings breakdown
-        $positiveRatingCount = $this->reviews()->where('rating', '>', 2)->count();
-        $negativeRatingCount = $this->reviews()->where('rating', '<=', 2)->count();
+        $type = 'normal';
 
-        // Calculate discounted price
+        if ($this->discounts()->exists()) {
+            $type = 'discount';
+        } elseif ($this->points()->exists()) {
+            $type = 'points';
+        } elseif ($this->offer()->exists()) {
+            $type = 'offer';
+        }
+
         $originalPrice = $this->consumer_price ?? $this->wholesale_price;
         $discountPercentage = $this->discounts->first()->percentage ?? 0;
-
         $discountedPrice = $originalPrice - ($originalPrice * ($discountPercentage / 100));
+
 
         // Calculate sold count from order items
         $soldCount = $this->sold_count ?? 0;
@@ -29,27 +30,31 @@ class PointProductPreviewResource extends JsonResource
             ? number_format($soldCount / 1000, 1) . 'K'
             : (string) $soldCount;
 
-        // Get average rating
         $averageRating = $this->whenLoaded('reviews', function () {
             return round($this->reviews->avg('rating') ?? 0, 1);
         }, 0);
+
+
         $point = $this->points->first();
+        $offer = $this->offer->first();
 
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'image' => $this->getFirstMediaUrl('images'),
-            'current_price' => number_format($discountedPrice, 0) . ' EGP',
-            'original_price' => number_format($originalPrice, 0) . ' LE',
+            'description' => $this->description,
+            'type' => $type, // النوع هنا
+            'original_price' => $originalPrice,
+            'percentage' => $discountPercentage,
             'discounted_price' => $discountedPrice,
-            'original_price_value' => $originalPrice,
-            'discount_percentage' => $discountPercentage,
+            'image' => $this->resource->getFirstMediaUrl('images'),
             'rating' => $averageRating,
             'sold_count' => $soldCount,
             'sold_count_formatted' => $soldCountFormatted,
             'sold_display' => "(+{$soldCountFormatted} Sold)",
             'point_type' => $point?->type,
             'points'     => $point?->points,
+            'offer_type' => $offer?->type,
+            'offer_percentage' => $offer?->percentage,
         ];
     }
 }

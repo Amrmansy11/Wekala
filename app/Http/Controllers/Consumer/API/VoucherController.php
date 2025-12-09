@@ -62,52 +62,7 @@ class VoucherController extends ConsumerController
     }
 
 
-   /**
-     * Get discount details with all products
-     */
-    public function shosw($id, Request $request): JsonResponse
-    {
-        $perPage = $request->integer('per_page', 15);
-
-        $filters = [
-            'search' => $request->string('search'),
-            'category_id' => $request->array('category_id', []),
-            'size_id' => $request->array('size_id', []),
-            'color_id' => $request->array('color_id', []),
-            'material_id' => $request->array('material_id', []),
-            'tag_id' => $request->array('tag_id', []),
-        ];
-
-        $voucher = $this->voucherRepository->query()
-            ->status('active')
-            ->where('id', $id)
-            ->first();
-
-        if (!$voucher) {
-            return response()->json(['message' => 'Voucher not found'], 404);
-        }
-
-        $productsQuery = $voucher->products()
-            ->with(['variants', 'reviews'])
-            ->withSum('orderItems as sold_count', 'quantity')
-            ->B2BB2C()
-            ->filter($filters);
-
-        $products = $productsQuery->paginate($perPage);
-        return response()->json([
-            'data' => new VoucherDetailsResource($voucher),
-            'products' => [
-                'data' => VoucherProductResource::collection($products),
-                'pagination' => [
-                    'currentPage' => $products->currentPage(),
-                    'total' => $products->total(),
-                    'perPage' => $products->perPage(),
-                    'lastPage' => $products->lastPage(),
-                    'hasMorePages' => $products->hasMorePages(),
-                ],
-            ],
-        ]);
-    }
+   
 
     /**
      * Get discount details with all products

@@ -9,17 +9,17 @@ class DiscountProductResource extends JsonResource
     public function toArray($request): array
     {
         // Calculate discounted price
-        $originalPrice = $this->wholesale_price ?? $this->consumer_price;
-        $discountPercentage = $this->discount_percentage ?? 0;
-        
+        $originalPrice = $this->consumer_price ?? $this->wholesale_price;
+        $discountPercentage = $this->discounts->first()->percentage ?? 0;
+
         $discountedPrice = $originalPrice - ($originalPrice * ($discountPercentage / 100));
 
         // Calculate sold count from order items
         $soldCount = $this->sold_count ?? 0;
-        
+
         // Format sold count (e.g., 48000 -> "48K")
-        $soldCountFormatted = $soldCount >= 1000 
-            ? number_format($soldCount / 1000, 1) . 'K' 
+        $soldCountFormatted = $soldCount >= 1000
+            ? number_format($soldCount / 1000, 1) . 'K'
             : (string) $soldCount;
 
         // Get average rating
