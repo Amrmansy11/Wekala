@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Vendor;
 
+use App\Models\CartShippingAddress;
 use App\Models\OrderShippingAddress;
 use Exception;
 use App\Models\Cart;
@@ -46,12 +47,12 @@ class OrderRepository extends BaseRepository
      * @return array{orders: Collection}
      * @throws Exception
      */
-    public function checkout(): array
+    public function checkout(array $request): array
     {
         /** @var VendorUser $vendorUser */
         $vendorUser = Auth::guard('vendor-api')->user();
 
-        return DB::transaction(function () use ($vendorUser) {
+        return DB::transaction(function () use ($vendorUser, $request) {
             /** @var Cart|null $cart */
             $cart = Cart::query()
                 ->with(['items' => function ($q) {
@@ -183,15 +184,16 @@ class OrderRepository extends BaseRepository
                     ->where('cart_id', $cart->id)
                     ->where('vendor_id', (int)$sellerVendorId)
                     ->delete();
-                if ($cart->shippingAddress) {
+                $shippingAddress = CartShippingAddress::query()->findOrFail($request['shipping_address_id']);
+                if ($shippingAddress) {
                     OrderShippingAddress::query()->create([
                         'order_id' => $order->id,
-                        'address_type' => $cart->shippingAddress->address_type,
-                        'recipient_name' => $cart->shippingAddress->recipient_name,
-                        'recipient_phone' => $cart->shippingAddress->recipient_phone,
-                        'full_address' => $cart->shippingAddress->full_address,
-                        'state_id' => $cart->shippingAddress->state_id,
-                        'city_id' => $cart->shippingAddress->city_id,
+                        'address_type' => $shippingAddress->address_type,
+                        'recipient_name' => $shippingAddress->recipient_name,
+                        'recipient_phone' => $shippingAddress->recipient_phone,
+                        'full_address' => $shippingAddress->full_address,
+                        'state_id' => $shippingAddress->state_id,
+                        'city_id' => $shippingAddress->city_id,
                     ]);
                 }
                 $ordersCreated->push($order->load('items'));
