@@ -85,7 +85,7 @@ class OfferController extends ConsumerController
         }
 
         $productsQuery = $offer->products()
-            ->with(['variants', 'reviews'])
+            ->with(['variants', 'reviews','discounts'])
             ->withSum('orderItems as sold_count', 'quantity')
             ->B2BB2C()
             ->filter($filters);
