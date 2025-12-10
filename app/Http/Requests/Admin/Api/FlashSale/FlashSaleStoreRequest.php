@@ -21,7 +21,7 @@ class FlashSaleStoreRequest extends ResponseShape
         return [
             'product_id' => [
                 'required',
-                'integer',
+                // 'integer',
                 Rule::unique('elwekala_collections', 'product_id')
                     ->where(function ($query) {
                         $query->where('type', 'flash_sale');

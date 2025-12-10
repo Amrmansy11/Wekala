@@ -25,7 +25,8 @@ class FlashSaleController extends AdminController
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->integer('per_page', 15);
-        $flashSales = $this->flashSaleRepository->query()->where('type', 'flash_sale')->withWhereHas('product', fn($query) => $query->with('variants'))->paginate($perPage);
+        $type_elwekala = $request->string('type_elwekala', 'seller');
+        $flashSales = $this->flashSaleRepository->query()->where('type', 'flash_sale')->where('type_elwekala', $type_elwekala)->withWhereHas('product', fn($query) => $query->with('variants'))->paginate($perPage);
         return response()->json([
             'data' => FlashSaleResource::collection($flashSales),
             'pagination' => [
