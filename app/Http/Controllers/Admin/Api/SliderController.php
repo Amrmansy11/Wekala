@@ -62,6 +62,7 @@ class SliderController extends AdminController
     public function store(SliderStoreRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $data['type'] = $data['type_elwekala'];
         $slider = $this->sliderRepository->store($data);
 
         if ($request->hasFile('images')) {
@@ -91,7 +92,7 @@ class SliderController extends AdminController
     public function update(SliderUpdateRequest $request, $sliderId): JsonResponse
     {
         $data = $request->validated();
-
+        $data['type'] = $data['type_elwekala'];
         $slider = $this->sliderRepository->find($sliderId);
 
         if (!$slider) {

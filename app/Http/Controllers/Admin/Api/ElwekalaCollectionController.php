@@ -26,10 +26,12 @@ class ElwekalaCollectionController extends AdminController
     public function index(Request $request): JsonResponse
     {
         $type = $request->string('type', 'best_sellers');
+        $type_elwekala = $request->string('type_elwekala', 'seller');
         $perPage = $request->integer('per_page', 15);
         $elwekalaCollections = $this->elwekalaCollectionRepository->query()
             ->whereNotNull('type')
             ->where('type', $type)
+            ->where('type_elwekala', $type_elwekala)
             ->withWhereHas('product', fn($query) => $query->with('variants'))->paginate($perPage);
         return response()->json([
             'data' => ElwekalaCollectionResource::collection($elwekalaCollections),
