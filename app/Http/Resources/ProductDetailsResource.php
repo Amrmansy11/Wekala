@@ -56,6 +56,7 @@ class ProductDetailsResource extends JsonResource
             'published_at' => $this->published_at,
             'stock' => $this->stock,
             'min_color' => $this->min_color,
+            'status' => $this->status,
             'views' => 5000,
             'favorites' => 25000,
             'sales' => 266000,

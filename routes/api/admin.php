@@ -31,6 +31,7 @@ Route::post('login', [AuthController::class, 'login']);
 Route::get('dropdown/{model}', [DropDownController::class, 'index']);
 Route::middleware('auth:admin-api')->group(function () {
     Route::resource('product', ProductController::class);
+    Route::post('product/{product}/status/{vendor_id}', [ProductController::class, 'updateStatus']);
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::resource('users', AdminUserController::class)->names('admin.users');
     Route::resource('roles', RolesController::class)->names('admin.roles');

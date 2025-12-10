@@ -179,6 +179,9 @@ class VendorController extends AdminController
     public function show($vendor): JsonResponse
     {
         $vendor = $this->vendorRepository->with(['users'])->where('parent_id', null)->withCount('followers', 'following', 'branches', 'products')->find($vendor);
+        if (!$vendor) {
+            return response()->json(['message' => 'Vendor not found'], 404);
+        }
         return response()->json(['data' => new VendorShowAdminResource($vendor),]);
     }
 
