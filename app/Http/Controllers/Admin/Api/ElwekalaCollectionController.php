@@ -77,7 +77,7 @@ class ElwekalaCollectionController extends AdminController
     {
         $validated = $request->validated();
 
-        $this->elwekalaCollectionRepository->query()->where('type', $validated['type'])->delete();
+        $this->elwekalaCollectionRepository->query()->where('type', $validated['type'])->where('type_elwekala', $validated['type_elwekala'])->delete();
 
         $createdItems = [];
 
@@ -98,7 +98,7 @@ class ElwekalaCollectionController extends AdminController
     /**
      * @throws Exception
      */
-    public function destroy($type): JsonResponse
+    public function destroy($type, $type_elwekala): JsonResponse
     {
         $allowedTypes = ['feeds', 'best_sellers', 'new_arrivals', 'most_popular', 'flash_sale'];
 
@@ -109,6 +109,7 @@ class ElwekalaCollectionController extends AdminController
         $deleted = $this->elwekalaCollectionRepository
             ->query()
             ->where('type', $type)
+            ->where('type_elwekala', $type_elwekala)
             ->delete();
 
         if (!$deleted) {

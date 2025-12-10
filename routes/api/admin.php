@@ -62,8 +62,10 @@ Route::middleware('auth:admin-api')->group(function () {
     Route::resource('policies', PolicyController::class);
     Route::resource('elwekala-collections', ElwekalaCollectionController::class)->names('admin.elwekala-collections')->except('destroy', 'update');
     Route::put('elwekala-collections/update', [ElwekalaCollectionController::class, 'update']);
-    Route::delete('elwekala-collections/{type}', [ElwekalaCollectionController::class, 'destroy']);
-    Route::resource('flash-sales', FlashSaleController::class)->names('admin.flash-sales');
+    Route::delete('elwekala-collections/{type}/{type_elwekala}', [ElwekalaCollectionController::class, 'destroy']);
+    Route::resource('flash-sales', FlashSaleController::class)->names('admin.flash-sales')->except('destroy', 'update');
+    Route::put('flash-sales/update', [FlashSaleController::class, 'update']);
+    Route::delete('flash-sales/{type}/{type_elwekala}', [FlashSaleController::class, 'destroy']);
     Route::resource('delivery-areas', DeliveryAreaController::class)->names('admin.delivery-areas');
     Route::resource('voucher', VoucherController::class);
     Route::resource('points', PointController::class);
