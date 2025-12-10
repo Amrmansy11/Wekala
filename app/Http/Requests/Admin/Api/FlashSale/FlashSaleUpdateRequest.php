@@ -27,6 +27,7 @@ class FlashSaleUpdateRequest extends ResponseShape
                 Rule::unique('elwekala_collections', 'product_id')
                     ->where(function ($query) {
                         $query->where('type', 'flash_sale');
+                        $query->where('type_elwekala', $this->type_elwekala);
                     })
                     ->ignore($id, 'product_id'),
                 Rule::exists('products', 'id')->where(function ($query) {

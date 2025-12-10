@@ -38,8 +38,9 @@ class ElwekalaCollectionStoreRequest extends ResponseShape
                     }),
                 Rule::unique('elwekala_collections', 'product_id')
                     ->where(function ($query) {
-                        $query->where('type', $this->type);
+                        $query->where('type', $this->type)->where('type_elwekala', $this->type_elwekala);
                     }),
+
             ],
             'type_elwekala' => 'required|in:consumer,seller',
         ];
