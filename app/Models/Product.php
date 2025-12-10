@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use OwenIt\Auditing\Auditable;
 use Spatie\MediaLibrary\HasMedia;
+use App\Models\Scopes\ActiveProduct;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -13,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use OwenIt\Auditing\Auditable;
 
 /**
  * @property int $id
@@ -232,5 +233,12 @@ class Product extends Model implements HasMedia, AuditableContract
     public function scopeSellersOnly(Builder $query): Builder
     {
         return $query->where('type', self::TYPE_SELLERS_ONLY);
+    }
+
+    //register global scope active
+    protected static function boot(): void
+    {
+        parent::boot();
+        static::addGlobalScope(new ActiveProduct());
     }
 }

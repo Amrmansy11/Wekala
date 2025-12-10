@@ -111,13 +111,12 @@ class FlashSaleController extends AdminController
     /**
      * @throws Exception
      */
-    public function destroy($type, $type_elwekala): JsonResponse
+    public function destroy($type_elwekala): JsonResponse
     {
-        $deleted = $this->flashSaleRepository->query()->where('type', $type)->where('type_elwekala', $type_elwekala)->delete();
+        $deleted = $this->flashSaleRepository->query()->where('type', 'flash_sale')->where('type_elwekala', $type_elwekala)->delete();
         if (!$deleted) {
             return response()->json(['message' => 'Flash Sale not found'], 404);
         }
-        $this->flashSaleRepository->delete($type);
         return response()->json(['data' => true, 'message' => 'Flash Sale deleted successfully']);
     }
 }
