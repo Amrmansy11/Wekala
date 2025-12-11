@@ -28,25 +28,22 @@ class SliderController extends AdminController
     {
         $perPage = $request->integer('per_page', 15);
         $search = $request->string('search');
-        $type = $request->string('type');
-        $sliders = $this->sliderRepository->query()->with('products')
-            ->when(
-                $search,
-                fn($query) =>
+        $type_elwekala = $request->string('type_elwekala', 'seller');
+        $is_active = $request->input('is_active');
+
+        $sliders = $this->sliderRepository->query()
+            ->with('products')
+            ->when($type_elwekala, fn($query) =>
+                $query->where('type', $type_elwekala)
+            )
+            ->when($search, fn($query) =>
                 $query->where('name', 'like', "%{$search}%")
             )
-            ->when(
-                $type,
-                fn($query) =>
-                $query->where('type', $type)
-            )
-            ->when(
-                $request->has('is_active') && in_array($request->input('is_active'), [0, 1, '0', '1'], true),
-                function ($query) use ($request) {
-                    $query->where('is_active', (int) $request->input('is_active'));
-                }
+            ->when(!is_null($is_active), fn($query) =>
+                $query->where('is_active', $is_active)
             )
             ->paginate($perPage);
+
         return response()->json([
             'data' => SliderResource::collection($sliders),
             'pagination' => [
@@ -59,9 +56,11 @@ class SliderController extends AdminController
         ]);
     }
 
+
     public function store(SliderStoreRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $data['type'] = $data['type_elwekala'];
         $slider = $this->sliderRepository->store($data);
 
         if ($request->hasFile('images')) {
@@ -91,7 +90,7 @@ class SliderController extends AdminController
     public function update(SliderUpdateRequest $request, $sliderId): JsonResponse
     {
         $data = $request->validated();
-
+        $data['type'] = $data['type_elwekala'];
         $slider = $this->sliderRepository->find($sliderId);
 
         if (!$slider) {

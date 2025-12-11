@@ -23,7 +23,7 @@ class SliderUpdateRequest extends FormRequest
             'is_active' => 'boolean',
             'media_remove_ids' => 'array',
             'media_remove_ids.*' => 'exists:media,id',
-            'type' => 'required|in:consumer,seller',
+            'type_elwekala' => 'required|in:consumer,seller',
         ];
     }
 }

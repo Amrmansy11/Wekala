@@ -9,8 +9,8 @@ class OfferProductResource extends JsonResource
     public function toArray($request): array
     {
         // Calculate discounted price
-        $originalPrice = $this->wholesale_price ?? $this->consumer_price;
-        $discountPercentage = $this->discount_percentage ?? 0;
+        $originalPrice = $this->consumer_price ?? $this->wholesale_price;
+        $discountPercentage = $this->offer->first()->percentage ?? 0;
 
         $discountedPrice = $originalPrice - ($originalPrice * ($discountPercentage / 100));
 

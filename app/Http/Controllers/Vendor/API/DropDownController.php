@@ -24,11 +24,16 @@ class DropDownController extends VendorController
     {
         $data = match ($model) {
             'roles' => Role::query()->where('guard_name', 'admin')->get(),
-            'permissions' =>$this->permissions(),
+            'permissions' => $this->permissions(),
             'colors' => Color::query()->where('is_active', true)->get(),
-            'categories' => Category::query()->whereNull('parent_id')->where('is_active', true)->get(),
+            'categories' => Category::query()
+                ->whereNull('parent_id')
+                // ->hasAnyProducts()
+                ->where('is_active', true)
+                ->get(),
             'sub_categories', 'sub_sub_categories' => Category::query()
                 ->where('parent_id', $request->integer('parent_id'))
+                // ->hasAnyProducts()
                 ->where('is_active', true)
                 ->get(),
             'materials' => Material::query()->where('is_active', true)->get(),
@@ -36,6 +41,7 @@ class DropDownController extends VendorController
             'tags' => Tag::query()
                 ->where('category_id', $request->integer('category_id'))
                 ->where('is_active', true)
+                // ->has('products')
                 ->get(),
             'tags_filter' => Tag::query()
                 ->where('is_active', true)

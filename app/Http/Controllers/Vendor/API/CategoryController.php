@@ -33,6 +33,7 @@ class CategoryController extends VendorController
                 fn($query) =>
                 $query->whereAny(['name->ar', 'name->en'], 'like', "%{$search}%")
             )
+            ->hasAnyProducts()
             ->where('is_active', true)
             ->paginate($perPage);
 

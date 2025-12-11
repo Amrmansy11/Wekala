@@ -26,8 +26,10 @@ class ProductResource extends JsonResource
             'views' => 5000,
             'favorites' => $this->favorites_count,
             'sales' => 266000,
+            'status' => $this->status,
             'colors' => $variants ? ColorsResource::collection($variants) : [],
             'gallery' => $gallery,
+            'status' => $this->status,
             'reviews' => [
                 'average_rating' => $this->reviews()->avg('rating') ?? 0,
                 'review_count' => $this->reviews()->count(),
@@ -37,4 +39,5 @@ class ProductResource extends JsonResource
                 'negative_count' => $negativeRatingCount,
             ],
         ];
-    }}
+    }
+}

@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class AppHelper
 {
@@ -124,14 +125,23 @@ class AppHelper
     {
         /** @var VendorUser $user */
         $user = auth()->user();
-        if (request()->hasHeader('vendor-id') && $vendorId = request()->header('vendor-id')) {
-            /** @var Vendor $vendor */
-            $vendor = Vendor::query()->where(['uuid' => $vendorId, 'parent_id' => $user->vendor_id])->firstOrFail();
-            $vendorId = $vendor->id;
-        } else {
-            $vendorId = $user->vendor_id;
+
+        if (!$user?->vendor_id) {
+            throw new UnauthorizedHttpException('Unauthorized.');
         }
-        return $vendorId;
+
+        $vendorUuid = request()->header('vendor-id');
+
+        if (empty($vendorUuid)) {
+            return $user->vendor_id;
+        }
+
+        $vendor = Vendor::query()
+            ->select('id')
+            ->where(['uuid' => $vendorUuid, 'parent_id' => $user->vendor_id])
+            ->firstOrFail();
+
+        return $vendor->id;
     }
     public static function hslToHex($h, $s, $l)
     {
@@ -143,17 +153,17 @@ class AppHelper
         $m = $l - $c / 2;
 
         if ($h < 60) {
-            list($r, $g, $b) = [$c, $x, 0];
+            [$r, $g, $b] = [$c, $x, 0];
         } elseif ($h < 120) {
-            list($r, $g, $b) = [$x, $c, 0];
+            [$r, $g, $b] = [$x, $c, 0];
         } elseif ($h < 180) {
-            list($r, $g, $b) = [0, $c, $x];
+            [$r, $g, $b] = [0, $c, $x];
         } elseif ($h < 240) {
-            list($r, $g, $b) = [0, $x, $c];
+            [$r, $g, $b] = [0, $x, $c];
         } elseif ($h < 300) {
-            list($r, $g, $b) = [$x, 0, $c];
+            [$r, $g, $b] = [$x, 0, $c];
         } else {
-            list($r, $g, $b) = [$c, 0, $x];
+            [$r, $g, $b] = [$c, 0, $x];
         }
 
         $r = ($r + $m) * 255;

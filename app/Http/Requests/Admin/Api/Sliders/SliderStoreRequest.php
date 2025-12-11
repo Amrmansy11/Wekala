@@ -22,7 +22,7 @@ class SliderStoreRequest extends FormRequest
             'product_ids' => 'sometimes|array',
             'product_ids.*' => 'exists:products,id',
             'is_active' => 'boolean',
-            'type' => 'required|in:consumer,seller',
+            'type_elwekala' => 'required|in:consumer,seller',
         ];
     }
 }

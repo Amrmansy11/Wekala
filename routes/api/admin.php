@@ -31,6 +31,7 @@ Route::post('login', [AuthController::class, 'login']);
 Route::get('dropdown/{model}', [DropDownController::class, 'index']);
 Route::middleware('auth:admin-api')->group(function () {
     Route::resource('product', ProductController::class);
+    Route::post('product/{product}/status/{vendor_id}', [ProductController::class, 'updateStatus']);
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::resource('users', AdminUserController::class)->names('admin.users');
     Route::resource('roles', RolesController::class)->names('admin.roles');
@@ -62,8 +63,10 @@ Route::middleware('auth:admin-api')->group(function () {
     Route::resource('policies', PolicyController::class);
     Route::resource('elwekala-collections', ElwekalaCollectionController::class)->names('admin.elwekala-collections')->except('destroy', 'update');
     Route::put('elwekala-collections/update', [ElwekalaCollectionController::class, 'update']);
-    Route::delete('elwekala-collections/{type}', [ElwekalaCollectionController::class, 'destroy']);
-    Route::resource('flash-sales', FlashSaleController::class)->names('admin.flash-sales');
+    Route::delete('elwekala-collections/{type}/{type_elwekala}', [ElwekalaCollectionController::class, 'destroy']);
+    Route::resource('flash-sales', FlashSaleController::class)->names('admin.flash-sales')->except('destroy', 'update');
+    Route::put('flash-sales/update', [FlashSaleController::class, 'update']);
+    Route::delete('flash-sales/{type_elwekala}', [FlashSaleController::class, 'destroy']);
     Route::resource('delivery-areas', DeliveryAreaController::class)->names('admin.delivery-areas');
     Route::resource('voucher', VoucherController::class);
     Route::resource('points', PointController::class);

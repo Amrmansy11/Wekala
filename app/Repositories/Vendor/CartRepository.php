@@ -154,6 +154,7 @@ class CartRepository extends BaseRepository
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
                         'total_price' => $item->unit_price * $item->quantity,
+                        'is_wishlist' => $item->product->is_fav,
                     ];
                 }),
             ];

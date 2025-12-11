@@ -25,7 +25,8 @@ class FlashSaleController extends AdminController
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->integer('per_page', 15);
-        $flashSales = $this->flashSaleRepository->query()->where('type', 'flash_sale')->withWhereHas('product', fn($query) => $query->with('variants'))->paginate($perPage);
+        $type_elwekala = $request->string('type_elwekala', 'seller');
+        $flashSales = $this->flashSaleRepository->query()->where('type', 'flash_sale')->where('type_elwekala', $type_elwekala)->withWhereHas('product', fn($query) => $query->with('variants'))->paginate($perPage);
         return response()->json([
             'data' => FlashSaleResource::collection($flashSales),
             'pagination' => [
@@ -39,13 +40,32 @@ class FlashSaleController extends AdminController
     }
 
 
+    // public function store(FlashSaleStoreRequest $request): JsonResponse
+    // {
+    //     $data = $request->validated();
+    //     $flashSale = $this->flashSaleRepository->store($data);
+    //     return response()->json([
+    //         'data' => new FlashSaleResource($flashSale)
+    //     ]);
+    // }
+
     public function store(FlashSaleStoreRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['type'] = 'flash_sale';
-        $flashSale = $this->flashSaleRepository->store($data);
+        $validated = $request->validated();
+        $validated['type'] = 'flash_sale';
+        $createdItems = [];
+
+        foreach ($validated['product_id'] as $productId) {
+            $createdItems[] = $this->flashSaleRepository->store([
+                'type' => $validated['type'],
+                'product_id' => $productId,
+                'type_elwekala' => $validated['type_elwekala'],
+            ]);
+        }
+
         return response()->json([
-            'data' => new FlashSaleResource($flashSale)
+            'data' => null,
+            'message' => 'Flash Sale created successfully',
         ]);
     }
 
@@ -58,26 +78,45 @@ class FlashSaleController extends AdminController
         return response()->json(['data' => new FlashSaleResource($flashSale)]);
     }
 
-    public function update(FlashSaleUpdateRequest $request, $flashSale): JsonResponse
-    {
-        $flashSale = $this->flashSaleRepository->query()->where('type', 'flash_sale')->find($flashSale);
-        if (!$flashSale) {
-            return response()->json(['message' => 'Flash Sale not found'], 404);
-        }
-        $flashSale = $this->flashSaleRepository->update($request->validated(), $flashSale->id);
-        return response()->json(['data' => new FlashSaleResource($flashSale)]);
-    }
+    // public function update(FlashSaleUpdateRequest $request, $flashSale): JsonResponse
+    // {
+    //     $flashSale = $this->flashSaleRepository->query()->where('type', 'flash_sale')->find($flashSale);
+    //     if (!$flashSale) {
+    //         return response()->json(['message' => 'Flash Sale not found'], 404);
+    //     }
+    //     $flashSale = $this->flashSaleRepository->update($request->validated(), $flashSale->id);
+    //     return response()->json(['data' => new FlashSaleResource($flashSale)]);
+    // }
 
+    public function update(FlashSaleUpdateRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $validated['type'] = 'flash_sale';
+        $this->flashSaleRepository->query()->where('type', $validated['type'])->where('type_elwekala', $validated['type_elwekala'])->delete();
+
+        $createdItems = [];
+
+        foreach ($validated['product_id'] as $productId) {
+            $createdItems[] = $this->flashSaleRepository->store([
+                'type'       => $validated['type'],
+                'product_id' => $productId,
+                'type_elwekala' => $validated['type_elwekala'],
+            ]);
+        }
+        return response()->json([
+            'data'    => null,
+            'message' => 'Collection updated successfully',
+        ]);
+    }
     /**
      * @throws Exception
      */
-    public function destroy($flashSale): JsonResponse
+    public function destroy($type_elwekala): JsonResponse
     {
-        $flashSale = $this->flashSaleRepository->query()->where('type', 'flash_sale')->find($flashSale);
-        if (!$flashSale) {
+        $deleted = $this->flashSaleRepository->query()->where('type', 'flash_sale')->where('type_elwekala', $type_elwekala)->delete();
+        if (!$deleted) {
             return response()->json(['message' => 'Flash Sale not found'], 404);
         }
-        $this->flashSaleRepository->delete($flashSale->id);
-        return response()->json(['data' => true]);
+        return response()->json(['data' => true, 'message' => 'Flash Sale deleted successfully']);
     }
 }
