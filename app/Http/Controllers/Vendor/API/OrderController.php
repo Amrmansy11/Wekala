@@ -167,9 +167,9 @@ class OrderController extends Controller
     public function checkout(Request $request): JsonResponse
     {
         $request->validate([
-            'shipping_address_id' => 'required|integer|exists:cart_shipping_addresses,id',
+            'branch_id' => 'required|integer|exists:vendor_users,id',
         ]);
-        $orders = $this->orderRepository->checkout($request->only(['shipping_address_id']));
+        $orders = $this->orderRepository->checkout($request->only(['branch_id']));
         return response()->json($orders);
     }
 
