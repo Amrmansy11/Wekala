@@ -28,12 +28,12 @@ class DropDownController extends VendorController
             'colors' => Color::query()->where('is_active', true)->get(),
             'categories' => Category::query()
                 ->whereNull('parent_id')
-                ->hasAnyProducts()
+                // ->hasAnyProducts()
                 ->where('is_active', true)
                 ->get(),
             'sub_categories', 'sub_sub_categories' => Category::query()
                 ->where('parent_id', $request->integer('parent_id'))
-                ->hasAnyProducts()
+                // ->hasAnyProducts()
                 ->where('is_active', true)
                 ->get(),
             'materials' => Material::query()->where('is_active', true)->get(),
@@ -41,7 +41,7 @@ class DropDownController extends VendorController
             'tags' => Tag::query()
                 ->where('category_id', $request->integer('category_id'))
                 ->where('is_active', true)
-                ->has('products')
+                // ->has('products')
                 ->get(),
             'tags_filter' => Tag::query()
                 ->where('is_active', true)
