@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class VoucherRepository extends BaseRepository
 {
@@ -24,27 +25,18 @@ class VoucherRepository extends BaseRepository
      */
     public function store(array $data): Voucher
     {
+        if (!isset($data['vendor_id'])) {
+            throw new BadRequestException('Vendor ID is required');
+        }
+
         return DB::transaction(function () use ($data) {
-            $voucher = new Voucher(array_merge($data, [
-                'vendor_id' => $data['vendor_id'],
-                'start_date' => Carbon::parse($data['start_date']),
-                'end_date' => Carbon::parse($data['end_date']),
-            ]));
-            $voucher->creatable()->associate(auth()->user());
-            $voucher->save();
+            $voucher = $this->createVoucher($data);
 
-            // Sync products only if for_all is false, otherwise empty the relationship
-            if ($data['for_all'] === false || $data['for_all'] === '0') {
-                if (!empty($data['products']) && is_array($data['products'])) {
-                    $voucher->products()->sync($data['products']);
-                } else {
-                    $voucher->products()->sync([]); // Ensure no products if none provided and for_all is false
-                }
-            } else {
-                $voucher->products()->sync([]); // Empty products if for_all is true
-            }
+            $voucher->products()->sync($data['products']);
 
-            return $voucher->load('products');
+            $voucher->load('products');
+
+            return $voucher;
         });
     }
 
@@ -118,5 +110,17 @@ class VoucherRepository extends BaseRepository
     {
         $usageCount = $voucher->users()->where('user_id', $userId)->count();
         return $usageCount < $voucher->number_of_use_per_person;
+    }
+
+    private function createVoucher(array $data): Voucher
+    {
+        $voucher = new Voucher(array_merge($data, [
+            'vendor_id'  => $data['vendor_id'],
+            'start_date' => Carbon::parse($data['start_date']),
+            'end_date'   => Carbon::parse($data['end_date']),
+        ]));
+        $voucher->creatable()->associate(auth()->user());
+        $voucher->save();
+        return $voucher;
     }
 }
