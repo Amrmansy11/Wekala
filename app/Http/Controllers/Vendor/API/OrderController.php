@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Vendor\API;
 
+use App\Models\Order;
 use Exception;
 use App\Helpers\AppHelper;
 use Illuminate\Http\Request;
@@ -180,5 +181,18 @@ class OrderController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
         return response()->json(['data' => new OrderResource($order)]);
+    }
+
+
+    public function verifyOrder(Request $request, Order $order): JsonResponse
+    {
+        $request->validate([
+            'code'     => 'required|string',
+        ]);
+        if($order->code == request()->get('code')) {
+            $order->update(['status' => 'completed']);
+            return response()->json(['data' => [], 'success' => true]);
+        }
+        return response()->json(['data' => [], 'success' => false]);
     }
 }

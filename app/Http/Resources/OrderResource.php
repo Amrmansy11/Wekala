@@ -2,9 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-
+/** @mixin Order */
 class OrderResource extends JsonResource
 {
     /**
@@ -23,6 +24,7 @@ class OrderResource extends JsonResource
             'sellers_count' => 1 + $this->children->count(),
             'total_items' => $this->items->count() + $this->children->sum(fn($child) => $child->items->count()),
             'sellers' => $this->formatSellers(),
+            'code' => $this->code,
         ];
     }
 
