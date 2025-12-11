@@ -93,11 +93,11 @@ class VoucherController extends VendorController
      * @return JsonResponse
      * @throws \Throwable
      */
-    public function update(VoucherUpdateRequest $request, $id): JsonResponse
+    public function update(VoucherUpdateRequest $request, $voucher): JsonResponse
     {
         $data = $request->validated();
         $data['vendor_id'] = AppHelper::getVendorId();
-        $this->voucherRepository->update($id, $data);
+        $this->voucherRepository->update($voucher, $data);
         return response()->json(['message' => 'Voucher updated successfully']);
     }
 

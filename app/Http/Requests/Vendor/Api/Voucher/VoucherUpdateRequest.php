@@ -17,7 +17,7 @@ class VoucherUpdateRequest extends ResponseShape
         return [
             'name' => 'required|string|max:255',
             // Unique code validation except for the current voucher being updated
-            'code' => ['required','string','unique:vouchers,code,'.$this->route('id'),'max:255'],
+            'code' => ['required','string',Rule::unique('vouchers','code')->ignore($this->route('voucher')),'max:255'],
             'percentage' => 'nullable|numeric|min:0|max:100',
             'amount' => 'nullable|numeric|min:0',
             'number_of_use' => 'required|integer|min:1',
