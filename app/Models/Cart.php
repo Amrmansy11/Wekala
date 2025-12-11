@@ -16,7 +16,6 @@ use OwenIt\Auditing\Auditable;
  * @property string $status
  * @property Collection $items
  * @property Vendor $vendor
- * @property CartShippingAddress $shippingAddress
  */
 class Cart extends Model implements AuditableContract
 {
@@ -40,11 +39,6 @@ class Cart extends Model implements AuditableContract
     public function items(): HasMany
     {
         return $this->hasMany(CartItem::class);
-    }
-
-    public function shippingAddress(): HasOne
-    {
-        return $this->hasOne(CartShippingAddress::class);
     }
 }
 

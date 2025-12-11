@@ -75,14 +75,13 @@ class OrderRepository extends BaseRepository
             $parentId = null;
             $index = 0;
             foreach ($itemsGrouped as $sellerVendorId => $items) {
-                $activeDiscounts = Discount::query()
-                    ->active()
-                    ->where('vendor_id', $sellerVendorId)
-                    ->with('products')
-                    ->get();
+
 
                 $subtotal = $items->sum(fn($i) => $i->unit_price * $i->quantity);
-                $discount = $this->calcDiscountAmount($items, $activeDiscounts);
+                $discount = $this->calcDiscountAmount($items, (int)$sellerVendorId);
+
+                $voucherDiscount = $this->calcVoucherDiscount($items, (int)$sellerVendorId);
+                $discount += $voucherDiscount;
                 //                $delivery = $this->calcDeliveryFees($buyerVendor, (int)$sellerVendorId);
                 $delivery = 0.0;
                 $total = max(0, $subtotal - $discount) + $delivery;
@@ -162,7 +161,7 @@ class OrderRepository extends BaseRepository
                     }
 
                     // Calculate discount for this item
-                    $itemDiscountData = $this->calcItemDiscount($item, $activeDiscounts);
+                    $itemDiscountData = $this->calcItemDiscount($item, $sellerVendorId);
                     $lineTotal = (float)$item->unit_price * (int)$item->quantity;
                     $priceAfterDiscount = $item->unit_price - $itemDiscountData['amount'];
                     $lineTotalAfterDiscount = $priceAfterDiscount * $item->quantity;
@@ -277,14 +276,9 @@ class OrderRepository extends BaseRepository
             $totalAmount = 0;
 
             foreach ($grouped as $vendorId => $items) {
-                $activeDiscounts = Discount::query()
-                    ->active()
-                    ->where('vendor_id', $vendorId)
-                    ->with('products')
-                    ->get();
 
                 $subtotal = $items->sum(fn($i) => $i->unit_price * $i->quantity);
-                $discount = $this->calcDiscountAmount($items, $activeDiscounts);
+                $discount = $this->calcDiscountAmount($items, (int)$vendorId);
                 $delivery = 0.0;
                 $total = max(0, $subtotal - $discount) + $delivery;
 
@@ -304,11 +298,11 @@ class OrderRepository extends BaseRepository
                         'size' => $item->variant ? $item->variant->sizes->pluck('size')->toArray() : [],
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
-                        'discount_percentage' => $this->calcItemDiscount($item, $activeDiscounts)['percentage'],
-                        'discount_amount' => $this->calcItemDiscount($item, $activeDiscounts)['amount'],
-                        'price_after_discount' => $item->unit_price - $this->calcItemDiscount($item, $activeDiscounts)['amount'],
+                        'discount_percentage' => $this->calcItemDiscount($item, $vendorId)['percentage'],
+                        'discount_amount' => $this->calcItemDiscount($item, $vendorId)['amount'],
+                        'price_after_discount' => $item->unit_price - $this->calcItemDiscount($item, $vendorId)['amount'],
                         'total_price' => $item->unit_price * $item->quantity,
-                        'total_after_discount' => ($item->unit_price - $this->calcItemDiscount($item, $activeDiscounts)['amount']) * $item->quantity,
+                        'total_after_discount' => ($item->unit_price - $this->calcItemDiscount($item, $vendorId)['amount']) * $item->quantity,
                     ]),
                 ];
             }
@@ -383,8 +377,13 @@ class OrderRepository extends BaseRepository
      * @param Collection $activeDiscounts Collection of active discounts
      * @return array ['discount_id' => int|null, 'percentage' => float, 'amount' => float]
      */
-    private function calcItemDiscount(CartItem|OrderItem $item, Collection $activeDiscounts): array
+    private function calcItemDiscount(CartItem|OrderItem $item, int $vendor_id): array
     {
+        $activeDiscounts = Discount::query()
+            ->active()
+            ->where('vendor_id', $vendor_id)
+            ->with('products')
+            ->get();
         if ($activeDiscounts->isEmpty()) {
             return ['discount_id' => null, 'percentage' => 0.0, 'amount' => 0.0];
         }
@@ -414,14 +413,19 @@ class OrderRepository extends BaseRepository
      * @param Collection $activeDiscounts Collection of active discounts
      * @return float Total discount amount
      */
-    private function calcDiscountAmount(Collection $items, Collection $activeDiscounts): float
+    private function calcDiscountAmount(Collection $items, int $sellerVendorId): float
     {
+        $activeDiscounts = Discount::query()
+            ->active()
+            ->where('vendor_id', $sellerVendorId)
+            ->with('products')
+            ->get();
         $totalDiscount = 0.0;
         if ($activeDiscounts->isEmpty()) {
             return $totalDiscount;
         }
         foreach ($items as $item) {
-            $itemDiscountData = $this->calcItemDiscount($item, $activeDiscounts);
+            $itemDiscountData = $this->calcItemDiscount($item, $sellerVendorId);
             $totalDiscount += $itemDiscountData['amount'] * $item->quantity;
         }
         return $totalDiscount;
