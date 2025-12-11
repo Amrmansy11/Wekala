@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Vendor\Api\Voucher;
 
 use App\Http\Requests\ResponseShape;
+use Illuminate\Validation\Rule;
 
 class VoucherStoreRequest extends ResponseShape
 {
@@ -14,11 +15,12 @@ class VoucherStoreRequest extends ResponseShape
     public function rules(): array
     {
         return [
-            'name'                     => 'required|string|max:255',
-            'code'                     => 'required|string|unique:vouchers,code|max:255',
-            'percentage'               => 'nullable|numeric|min:0|max:100',
-            'amount'                   => 'nullable|numeric|min:0',
-            'number_of_use'            => 'required|integer|min:1',
+            'name' => 'required|string|max:255',
+            // Unique code validation except for the current voucher being updated
+            'code' => ['required','string',Rule::unique('vouchers', 'code')->ignore($this->route('id')),'max:255'],
+            'percentage' => 'nullable|numeric|min:0|max:100',
+            'amount' => 'nullable|numeric|min:0',
+            'number_of_use' => 'required|integer|min:1',
             'number_of_use_per_person' => 'required|integer|min:1',
             'for_all'                  => 'required|boolean',
             'start_date'               => 'required|date|after_or_equal:'.now()->toDateTimeString(),
