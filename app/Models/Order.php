@@ -28,6 +28,7 @@ use OwenIt\Auditing\Auditable;
  * @property Vendor $vendor
  * @property VendorUser $vendorUser
  * @property Cart $cart
+ * @property ?string $code
  */
 class Order extends Model implements AuditableContract
 {
@@ -45,6 +46,7 @@ class Order extends Model implements AuditableContract
         'total',
         'status',
         'user_id',
+        'code',
     ];
 
     public function buyerVendor(): BelongsTo

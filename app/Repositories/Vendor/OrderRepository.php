@@ -93,8 +93,10 @@ class OrderRepository extends BaseRepository
                     'delivery' => (float)$delivery,
                     'total' => (float)$total,
                     'status' => 'pending',
+                    'code' => $this->generateUniqueCode()
                 ]);
                 $order->save();
+
                 if ($index === 0) {
                     $parentId = $order->id;
                 }
@@ -357,5 +359,14 @@ class OrderRepository extends BaseRepository
             ->first();
 
         return $deliveryArea ? (float)$deliveryArea->price : 0.0;
+    }
+
+    private function generateUniqueCode()
+    {
+        do {
+            $code = str_pad(random_int(0, 9999999999), 10, '0', STR_PAD_LEFT);
+        } while (DB::table('orders')->where('code', $code)->exists());
+
+        return $code;
     }
 }

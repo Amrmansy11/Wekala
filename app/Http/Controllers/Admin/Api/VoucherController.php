@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Api;
 
 use App\Helpers\AppHelper;
 use App\Http\Requests\Vendor\Api\Voucher\VoucherStoreRequest;
+use App\Http\Requests\Vendor\Api\Voucher\VoucherUpdateRequest;
 use App\Http\Resources\VoucherResource;
 use App\Repositories\Vendor\VoucherRepository;
 use Illuminate\Http\JsonResponse;
@@ -86,12 +87,12 @@ class VoucherController extends AdminController
     }
 
     /**
-     * @param VoucherStoreRequest $request
+     * @param VoucherUpdateRequest $request
      * @param $id
      * @return JsonResponse
      * @throws \Throwable
      */
-    public function update(VoucherStoreRequest $request, $id): JsonResponse
+    public function update(VoucherUpdateRequest $request, $id): JsonResponse
     {
         $data = $request->validated();
         $this->voucherRepository->update($id, $data);

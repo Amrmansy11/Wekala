@@ -138,6 +138,7 @@ Route::middleware('auth:vendor-api')->group(function () {
         Route::get('orders/seller', [OrderController::class, 'getSellerOrders']);
         Route::get('orders/buyer', [OrderController::class, 'getBuyerOrders']);
         Route::get('order/{id}', [OrderController::class, 'show']);
+        Route::post('order/{order}/verify-code', [OrderController::class, 'verifyOrder']);
         Route::post('order/{id}/change-status', [OrderController::class, 'changeStatus']);
         Route::post('order/{id}/cancel', [OrderController::class, 'cancelOrder']);
         Route::resource('sizes-templates', SizeTemplateController::class);
