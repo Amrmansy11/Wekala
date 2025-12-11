@@ -136,6 +136,6 @@ class RegisterController extends Controller
                 ->usingName($vendorUser->name)
                 ->toMediaCollection('vendor_national_id');
         }
-        return response()->json(['data' => new VendorResource($vendor)]);
+        return response()->json(['data' => new VendorUserResource($vendor)]);
     }
 }
