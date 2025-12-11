@@ -342,6 +342,7 @@ class StoreController extends VendorController
         }
         $category = $this->categoryRepository
             ->with(['children.children'])
+            ->hasAnyProducts()
             ->find($vendor->category_id);
 
         $subSubCategories = $category->children

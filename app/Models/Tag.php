@@ -20,4 +20,9 @@ class Tag extends Model implements AuditableContract
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function products() : BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_tags');
+    }
 }
