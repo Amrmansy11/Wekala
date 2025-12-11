@@ -63,7 +63,9 @@ class FeedController extends VendorController
                 ->usingName('feed_media_' . $feed->id)
                 ->toMediaCollection('feed_media');
         }
-        $feed->products()->attach($data['products_ids']);
+        if(count($data['products_ids']) > 0) {
+            $feed->products()->attach($data['products_ids']);
+        }
         return response()->json(['data' => new FeedResource($feed)]);
     }
 
