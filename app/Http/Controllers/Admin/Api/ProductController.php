@@ -29,7 +29,7 @@ class ProductController extends AdminController
         $status = $request->get('status');
 
         $query = $this->productRepository->query()
-            ->withoutGlobalScope()
+            ->withoutGlobalScope(ActiveProduct::class)
             ->with('category', 'brand', 'tags', 'sizes', 'variants');
 
         // Apply status filter if provided
