@@ -66,4 +66,28 @@ class Category extends Model implements HasMedia, AuditableContract
     {
         $this->addMediaCollection('category_image')->useDisk('public');
     }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'category_id');
+    }
+
+    public function subCategoryProducts(): HasMany
+    {
+        return $this->hasMany(Product::class, 'sub_category_id');
+    }
+
+    public function subSubCategoryProducts(): HasMany
+    {
+        return $this->hasMany(Product::class, 'sub_sub_category_id');
+    }
+
+    public function scopeHasAnyProducts($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereHas('products')
+                ->orWhereHas('subCategoryProducts')
+                ->orWhereHas('subSubCategoryProducts');
+        });
+    }
 }
