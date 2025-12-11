@@ -30,6 +30,7 @@ class PointController extends ConsumerController
             ->whereHas('points', function ($q) use ($type) {
 
                 $q->active()
+                    ->has('products')
                     ->when($type, fn($q) => $q->where('type', $type));
             })
             ->with([
