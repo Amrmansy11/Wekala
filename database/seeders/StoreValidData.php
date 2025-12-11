@@ -17,14 +17,14 @@ class StoreValidData extends Seeder
 {
     public function run(): void
     {
-        // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        // VendorUser::query()->truncate();
-        // Vendor::query()->truncate();
-        // Product::query()->truncate();
-        // Voucher::query()->truncate();
-        // Offer::query()->truncate();
-        // Feed::query()->truncate();
-        // DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        VendorUser::query()->truncate();
+        Vendor::query()->truncate();
+        Product::query()->truncate();
+        Voucher::query()->truncate();
+        Offer::query()->truncate();
+        Feed::query()->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         $vendorUser = VendorUser::query()->create([
             'name' => 'H&M',
             'email' => 'h&m@gmail.com',

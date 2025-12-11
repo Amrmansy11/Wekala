@@ -32,6 +32,7 @@ class DiscountController extends ConsumerController
             ->withCount('followers')
             ->whereHas('discounts', function ($q) use ($search) {
                 $q->active()
+                    ->has('products')
                     ->when($search, fn($q) => $q->where('title', 'like', "%{$search}%"));
             })
             ->with([

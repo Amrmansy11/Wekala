@@ -22,7 +22,6 @@ use App\Repositories\Vendor\VendorRepository;
 use App\Repositories\Admin\CategoryRepository;
 use App\Repositories\Vendor\VoucherRepository;
 use Symfony\Component\HttpFoundation\Response;
-use App\Http\Resources\Store\StoreInfoResource;
 use App\Http\Resources\Store\StoreBrandResource;
 use App\Http\Requests\Vendor\Api\Auth\OTPRequest;
 use App\Http\Resources\Store\OffersStoreResource;
@@ -32,6 +31,7 @@ use App\Http\Resources\Store\VouchersStoreResource;
 use App\Repositories\Vendor\VoucherCollectRepository;
 use Illuminate\Cache\RateLimiter as RateLimiterCache;
 use App\Http\Resources\Store\BestSellingStoreResource;
+use App\Http\Resources\Consumer\Store\StoreInfoResource;
 use App\Http\Resources\Store\NewArrivalProductsResource;
 use App\Http\Resources\Store\OffersStoreProductsResource;
 use App\Http\Resources\Store\SubSubCategoriesStoreResource;
@@ -129,13 +129,14 @@ class MyStoreController extends VendorController
             ->orderByDesc('order_items_sum_quantity')
             ->take(5)
             ->get();
-        $category = $this->categoryRepository->with(['children.children'])->find($vendors->category_id);
+        $category = $this->categoryRepository->with(['children.children'])->hasAnyProducts()->find($vendors->category_id);
         $subSubCategories = $category->children
             ->flatMap->children
             ->filter(fn($child) => $child->hasMedia('category_image'));
         $brands = $this->brandRepository->query()
             ->where('vendor_id', $vendors->id)
             ->orWhere('category_id', $vendors->category_id)
+            ->has('products')
             ->get();
 
 

@@ -38,7 +38,7 @@ class FeedStoreRequest extends ResponseShape
                 'max:10240',
             ],
             'products_ids' => [
-                'required',
+                'nullable',
                 'array',
                 'min:1',
             ],

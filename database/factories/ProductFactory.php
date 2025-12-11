@@ -2,16 +2,17 @@
 
 namespace Database\Factories;
 
-use App\Models\Product;
-use App\Models\Category;
+use App\Models\Tag;
 use App\Models\Brand;
 use App\Models\Vendor;
+use App\Models\Product;
+use App\Models\Category;
 use App\Models\VendorUser;
-use App\Models\Tag;
 use App\Models\ProductSize;
+use App\Enums\ProductStatus;
+use Illuminate\Support\Carbon;
 use App\Models\ProductMeasurement;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Carbon;
 
 class ProductFactory extends Factory
 {
@@ -37,13 +38,13 @@ class ProductFactory extends Factory
             'stock_b2c' => $this->faker->numberBetween(50, 500),
             'min_color' => $this->faker->numberBetween(1, 10),
             'published_at' => Carbon::now(),
-            'status' => 'active',
+            'status' => $this->faker->randomElement(ProductStatus::toArray()),
             'elwekala_policy' => true,
             'vendor_id' => fn() => $this->randomVendorId(),
             'creatable_type' => VendorUser::class,
             // 'creatable_id' => fn($attrs) => VendorUser::query()->where('vendor_id', $attrs['vendor_id'])->inRandomOrder()->first()->id,
             'creatable_id' => 149,
-            'type' => $this->faker->randomElement(['b2b', 'b2c', 'b2b_b2c']),
+            'type' => $this->faker->randomElement(['b2c', 'b2b_b2c']),
         ];
     }
 

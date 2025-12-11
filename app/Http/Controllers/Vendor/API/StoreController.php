@@ -109,13 +109,16 @@ class StoreController extends VendorController
             ], 404);
         }
         $products = $vendors->products()->inRandomOrder()->take(5)->latest()->get();
-        $category = $this->categoryRepository->with(['children.children'])->find($vendors->category_id);
+        $category = $this->categoryRepository->with(['children.children'])
+        ->hasAnyProducts()
+        ->find($vendors->category_id);
         $subSubCategories = $category->children
             ->flatMap->children
             ->filter(fn($child) => $child->hasMedia('category_image'));
         $brands = $this->brandRepository->query()
             ->where('vendor_id', $id)
             ->orWhere('category_id', $vendors->category_id)
+            ->has('products')
             ->get();
 
 
