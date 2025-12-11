@@ -22,7 +22,7 @@ class VoucherStoreRequest extends ResponseShape
             'for_all' => 'required|boolean',
             'start_date' => 'required|date|after_or_equal:' . now()->toDateTimeString(),
             'end_date' => 'required|date|after:start_date',
-            'products' => 'required_if:for_all,0|false|array',
+            'products' => 'required_if:for_all,0,false|array',
             'products.*' => 'exists:products,id',
             'vendor_id' => 'sometimes|exists:vendors,id',
         ];
