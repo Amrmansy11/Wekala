@@ -185,7 +185,7 @@ class OrderRepository extends BaseRepository
                     ->where('vendor_id', (int)$sellerVendorId)
                     ->delete();
                 $shippingAddress = CartShippingAddress::query()->where('addressable_type', VendorUser::class)
-                    ->where('addressable_id', $request->branch_id)
+                    ->where('addressable_id', $request['branch_id'])
                     ->first();
                 if(!$shippingAddress){
                     $shippingAddress = CartShippingAddress::query()->where('addressable_type', Vendor::class)
