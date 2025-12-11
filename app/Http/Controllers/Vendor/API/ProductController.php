@@ -11,6 +11,7 @@ use App\Http\Resources\ProductResource;
 use App\Http\Resources\ProductDetailsResource;
 use App\Repositories\Vendor\ProductRepository;
 use App\Http\Requests\Vendor\Api\Product\ProductStoreRequest;
+use App\Models\Scopes\ActiveProduct;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 
@@ -33,6 +34,7 @@ class ProductController extends Controller
         $status = $request->get('status');
 
         $query = $this->productRepository->query()
+            ->withoutGlobalScopes(ActiveProduct::class)
             ->where('vendor_id', AppHelper::getVendorId())
             ->sellersOnly()
             ->with('category', 'brand', 'tags', 'sizes', 'variants', 'reviews')
