@@ -34,7 +34,7 @@ class ProductController extends Controller
         $status = $request->get('status');
 
         $query = $this->productRepository->query()
-            ->withoutGlobalScopes(ActiveProduct::class)
+            ->withoutGlobalScopes()
             ->where('vendor_id', AppHelper::getVendorId())
             ->sellersOnly()
             ->with('category', 'brand', 'tags', 'sizes', 'variants', 'reviews')
@@ -71,8 +71,10 @@ class ProductController extends Controller
         $data = $request->validated();
         $data['vendor_id'] = AppHelper::getVendorId();
         $product = $this->productRepository->store($data);
-        return response()->json(['message' => 'Product created successfully',
-            'product' => new ProductDetailsResource($product)], 201);
+        return response()->json([
+            'message' => 'Product created successfully',
+            'product' => new ProductDetailsResource($product)
+        ], 201);
     }
 
     public function show($id): JsonResponse
@@ -190,6 +192,4 @@ class ProductController extends Controller
             'sales' => $sales,
         ]);
     }
-
-
 }
