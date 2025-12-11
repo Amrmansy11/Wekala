@@ -29,7 +29,7 @@ class ProductController extends AdminController
         $status = $request->get('status');
 
         $query = $this->productRepository->query()
-            ->withoutGlobalScope(ActiveProduct::class)
+            ->withoutGlobalScope()
             ->with('category', 'brand', 'tags', 'sizes', 'variants');
 
         // Apply status filter if provided
@@ -53,7 +53,7 @@ class ProductController extends AdminController
         }
         if ($request->has('vendor_id')) {
             $vendor_id = $request->get('vendor_id');
-            $query->where('vendor_id',$vendor_id);
+            $query->where('vendor_id', $vendor_id);
         }
 
         $products = $query->paginate($perPage);
@@ -105,11 +105,11 @@ class ProductController extends AdminController
 
 
 
-    public function updateStatus(UpdateStatusProduct $request, $id,$vendor_id): JsonResponse
+    public function updateStatus(UpdateStatusProduct $request, $id, $vendor_id): JsonResponse
     {
         $product = $this->productRepository->query()
-        ->withoutGlobalScope(ActiveProduct::class)
-        ->where('vendor_id', $vendor_id)->find($id);
+            ->withoutGlobalScope(ActiveProduct::class)
+            ->where('vendor_id', $vendor_id)->find($id);
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
