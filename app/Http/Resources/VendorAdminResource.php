@@ -14,7 +14,7 @@ class VendorAdminResource extends JsonResource
             'id' => $this->resource->id,
             'store_type' => $this->resource->store_type,
             'store_name' => $this->resource->store_name,
-            'image' => $this->resource->vendorUsers->getFirstMediaUrl('vendor_user') ?: null,
+            'image' => $this->resource->vendorUsers?->getFirstMediaUrl('vendor_user') ?: null,
             'logo' => $this->resource->getFirstMediaUrl('vendor_logo') ?: null,
             'cover' => $this->resource->getFirstMediaUrl('vendor_cover') ?: null,
             'status' => $this->resource->status,
