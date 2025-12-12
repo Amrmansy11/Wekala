@@ -47,6 +47,7 @@ class Order extends Model implements AuditableContract
         'status',
         'user_id',
         'code',
+        'discount_type',
     ];
 
     public function buyerVendor(): BelongsTo

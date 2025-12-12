@@ -35,6 +35,8 @@ class OrderItem extends Model implements AuditableContract
         'product_id',
         'product_variant_id',
         'discount_id',
+        'voucher_id',
+        'offer_id',
         'quantity',
         'unit_price',
         'discount_percentage',

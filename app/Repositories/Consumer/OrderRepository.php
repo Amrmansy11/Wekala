@@ -2,24 +2,22 @@
 
 namespace App\Repositories\Consumer;
 
+use App\Models\CartShippingAddress;
+use App\Models\OrderShippingAddress;
+use App\Models\User;
 use Exception;
 use App\Models\Cart;
-use App\Models\User;
-use App\Models\Offer;
+use App\Models\Discount;
 use App\Models\Order;
 use App\Models\Vendor;
 use App\Models\Product;
 use App\Models\Voucher;
 use App\Models\CartItem;
-use App\Models\Discount;
 use App\Models\OrderItem;
 use App\Models\VendorUser;
-use App\Models\DeliveryArea;
 use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Models\CartShippingAddress;
-use App\Models\OrderShippingAddress;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
@@ -277,38 +275,22 @@ class OrderRepository extends BaseRepository
             $totalDelivery = 0;
             $totalAmount = 0;
 
+            foreach ($grouped as $vendorId => $items) {
 
-        foreach ($grouped as $vendorId => $items) {
-            // Get active discounts for this vendor once
+                $subtotal = $items->sum(fn($i) => $i->unit_price * $i->quantity);
+                $discount = $this->calcDiscountAmount($items, (int)$vendorId);
+                $delivery = 0.0;
+                $total = max(0, $subtotal - $discount) + $delivery;
 
+                $totalSubtotal += $subtotal;
+                $totalDiscount += $discount;
+                $totalDelivery += $delivery;
+                $totalAmount += $total;
 
-            $subtotal = $items->sum(fn($i) => $i->unit_price * $i->quantity);
-            $discountArray = $this->getDiscountWithType($items, $vendorId);
-            $discount = $discountArray['discount'] ?? 0;
-            $type = $discountArray['type'] ?? null;
-            $discountPercent = round(($discount / $subtotal) * 100, 2) ;
-            $delivery = 0.0; // حسب حسابك
-            $total = max(0, $subtotal - $discount) + $delivery;
-
-            $totalSubtotal += $subtotal;
-            $totalDiscount += $discount;
-            $totalDelivery += $delivery;
-            $totalAmount += $total;
-
-            $vendors[] = [
-                'vendor_id' => $vendorId,
-                'vendor_name' => optional($items->first()->vendor)->store_name,
-                'items' => $items->map(function ($item) use ($discountPercent, $type) {
-                    if($type == 'discount'){
-                        $itemDiscountData = $this->calcItemDiscount($item, $item->vendor_id);
-                    }else {
-                        $itemDiscountData = [
-                            'amount' => $item->unit_price * $discountPercent,
-                            'percentage' => $discountPercent,
-                        ];
-                    }
-
-                    return [
+                $vendors[] = [
+                    'vendor_id' => $vendorId,
+                    'vendor_name' => optional($items->first()->vendor)->store_name,
+                    'items' => $items->map(fn($item) => [
                         'id' => $item->id,
                         'product_name' => $item->product->name ?? null,
                         'image' => $item->product->getFirstMediaUrl('images'),
@@ -316,16 +298,14 @@ class OrderRepository extends BaseRepository
                         'size' => $item->variant ? $item->variant->sizes->pluck('size')->toArray() : [],
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
-                        'discount_percentage' => $itemDiscountData['percentage'],
-                        'discount_amount' => $itemDiscountData['amount'],
-                        'discount_type' => $type,
-                        'price_after_discount' => $item->unit_price - $itemDiscountData['amount'],
+                        'discount_percentage' => $this->calcItemDiscount($item, $vendorId)['percentage'],
+                        'discount_amount' => $this->calcItemDiscount($item, $vendorId)['amount'],
+                        'price_after_discount' => $item->unit_price - $this->calcItemDiscount($item, $vendorId)['amount'],
                         'total_price' => $item->unit_price * $item->quantity,
-                        'total_after_discount' => ($item->unit_price - $itemDiscountData['amount']) * $item->quantity,
-                    ];
-                }),
-            ];
-        }
+                        'total_after_discount' => ($item->unit_price - $this->calcItemDiscount($item, $vendorId)['amount']) * $item->quantity,
+                    ]),
+                ];
+            }
 
             $summary = [
                 'subtotal' => (float)$totalSubtotal,
@@ -390,68 +370,69 @@ class OrderRepository extends BaseRepository
         ];
     }
 
-    private function calcItemDiscount($item, $vendorId): array
+    /**
+     * Calculate discount for a single cart item.
+     *
+     * @param CartItem $item Cart item to calculate discount for
+     * @param Collection $activeDiscounts Collection of active discounts
+     * @return array ['discount_id' => int|null, 'percentage' => float, 'amount' => float]
+     */
+    private function calcItemDiscount(CartItem|OrderItem $item, int $vendor_id): array
     {
         $activeDiscounts = Discount::query()
             ->active()
-            ->where('vendor_id', $vendorId)
+            ->where('vendor_id', $vendor_id)
             ->with('products')
             ->get();
-
         if ($activeDiscounts->isEmpty()) {
-            return ['percentage' => 0.0, 'amount' => 0.0];
+            return ['discount_id' => null, 'percentage' => 0.0, 'amount' => 0.0];
         }
-
-        // Find discounts applicable to this product
         $applicableDiscounts = $activeDiscounts->filter(function ($discount) use ($item) {
             return $discount->products->contains('id', $item->product_id);
         });
 
         if ($applicableDiscounts->isEmpty()) {
-            return ['percentage' => 0.0, 'amount' => 0.0, 'discount' => null];
+            return ['discount_id' => null, 'percentage' => 0.0, 'amount' => 0.0];
         }
 
-        // Apply the highest discount percentage if multiple discounts apply
-        $maxDiscountPercentage = $applicableDiscounts->max('percentage') ?? 0.0;
-
-        // Calculate discount amount per unit
+        /** @var Discount $bestDiscount */
+        $bestDiscount = $applicableDiscounts->sortByDesc('percentage')->first();
+        $maxDiscountPercentage = $bestDiscount->percentage ?? 0.0;
         $discountAmount = $item->unit_price * ($maxDiscountPercentage / 100);
-
         return [
-            'percentage' => (float)$maxDiscountPercentage,
+            'discount_id' => $bestDiscount->id,
+            'percentage' => $maxDiscountPercentage,
             'amount' => (float)$discountAmount,
-            'discount' => $applicableDiscounts->firstWhere('percentage', $maxDiscountPercentage),
         ];
     }
 
     /**
-     * Calculate discount amount from the discounts table for cart items.
+     * Calculate total discount amount from the discounts table for cart items.
      *
      * @param Collection $items Cart items to calculate discount for
-     * @param int $vendorId Vendor ID
+     * @param Collection $activeDiscounts Collection of active discounts
      * @return float Total discount amount
      */
-    private function calcDiscountAmount(Collection $items, int $vendorId): float
+    private function calcDiscountAmount(Collection $items, int $sellerVendorId): float
     {
-        $totalDiscount = 0.0;
         $activeDiscounts = Discount::query()
             ->active()
-            ->where('vendor_id', $vendorId)
+            ->where('vendor_id', $sellerVendorId)
             ->with('products')
             ->get();
-
+        $totalDiscount = 0.0;
         if ($activeDiscounts->isEmpty()) {
             return $totalDiscount;
         }
-
         foreach ($items as $item) {
-            $itemDiscountData = $this->calcItemDiscount($item, $vendorId);
+            $itemDiscountData = $this->calcItemDiscount($item, $sellerVendorId);
             $totalDiscount += $itemDiscountData['amount'] * $item->quantity;
         }
         return $totalDiscount;
     }
 
-    private function calcVoucherDiscount($items, $vendorId): float|int
+    private function calcVoucherDiscount($items, int $vendorId): float
+
     {
         $discount = 0.0;
         $activeVouchers = Voucher::query()
@@ -481,95 +462,21 @@ class OrderRepository extends BaseRepository
             })->max() ?? 0.0;
             $discount += $best * $item->quantity;
         }
-        return $discount;
+        return (float)$discount;
     }
 
-    /**
-     * @param $buyerVendor
-     * @param $vendorId
-     * @return float
-     */
-    private function calcDeliveryFees($buyerVendor, $vendorId): float
+    private function calcDeliveryFees(?Vendor $buyerVendor, int $vendorId): float
     {
-        $delivery = 0.0;
-        if ($buyerVendor) {
-            /** @var DeliveryArea $deliveryArea */
-            $deliveryArea = DeliveryArea::query()
-                ->where('vendor_id', $vendorId)
-                ->where('state_id', $buyerVendor->state_id)
-                ->where('city_id', $buyerVendor->city_id)
-                ->first();
-            if ($deliveryArea) {
-                $delivery = (float)$deliveryArea->price;
-            }
+        if (!$buyerVendor) {
+            return 0.0;
         }
-        return $delivery;
-    }
-    public function calculateOfferAmount(Collection $items, int $vendorId): float
-    {
 
-        $offers = Offer::query()
+        $deliveryArea = \App\Models\DeliveryArea::query()
             ->where('vendor_id', $vendorId)
-            ->where('start', '<=', now())
-            ->where('end', '>=', now())
-            ->get();
+            ->where('state_id', $buyerVendor->state_id)
+            ->where('city_id', $buyerVendor->city_id)
+            ->first();
 
-        $quantity = $items->sum('quantity');
-        $originalAmount  = $items->sum(fn($i) => $i->unit_price * $i->quantity);
-
-        foreach ($offers as $offer) {
-            switch ($offer->type) {
-                case 'quantity':
-                    if ($quantity >= $offer->quantity) {
-                        return $originalAmount * ($offer->discount / 100);
-                    }
-                    break;
-
-                case 'purchase':
-                    if ($originalAmount >= $offer->amount) {
-                        return $originalAmount * ($offer->discount / 100);
-                    }
-                    break;
-
-                case 'custom':
-                    if ($quantity >= $offer->buy) {
-                        // calculate free items based on the lowest unit price and quantity until 'get' is reached
-                        $sortedItems = $items->sortBy('unit_price');
-                        $freeItemsCount = 0;
-                        $discountAmount = 0.0;
-                        foreach ($sortedItems as $item) {
-                            for ($i = 0; $i < $item->quantity; $i++) {
-                                if ($freeItemsCount < $offer->get) {
-                                    $discountAmount += $item->unit_price;
-                                    $freeItemsCount++;
-                                } else {
-                                    break 2; // exit both loops
-                                }
-                            }
-                        }
-                        return $discountAmount;
-                    }
-                    break;
-            }
-        }
-        return 0.0;
-    }
-
-
-    private function getDiscountWithType(Collection $items, int $vendorId): array
-    {
-        $discount = $this->calcDiscountAmount($items, $vendorId);
-        if($discount > 0){
-            return ['type' => 'discount', 'amount' => $discount];
-        }
-        $discount = $this->calcVoucherDiscount($items, $vendorId);
-        if($discount > 0){
-            return ['type' => 'voucher', 'amount' => $discount];
-        }
-        $discount = $this->calculateOfferAmount($items, $vendorId);
-        if($discount > 0){
-            return ['type' => 'offer', 'amount' => $discount];
-        }
-        return ['type' => null, 'amount' => 0.0];
+        return $deliveryArea ? (float)$deliveryArea->price : 0.0;
     }
 }
