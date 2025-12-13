@@ -556,15 +556,15 @@ class OrderRepository extends BaseRepository
     private function loadDiscounts(Collection $itemsGrouped): void
     {
         foreach ($itemsGrouped as $vendorId => $items) {
-            $ids = $items->pluck('id');
+            $ids = $items->pluck('product_id');
             $discounts = Discount::query()
                 ->active()
                 ->join('discount_products', function($join) use ($ids) {
-                    $join->on('discounts.id', '=', 'discount_products.discount_id')
-                        ->whereIn('discount_products.product_id', $ids);
+                    $join->on('discounts.id', '=', 'discount_products.discount_id');
                 })
                 ->select(DB::raw('discounts.*, discount_products.product_id as product_id'))
                 ->where('vendor_id', $vendorId)
+                ->whereIn('discount_products.product_id', $ids)
                 ->get();
 
             if ($discounts->isEmpty()) {
@@ -590,15 +590,15 @@ class OrderRepository extends BaseRepository
     private function loadVouchers(Collection $itemsGrouped): void
     {
         foreach ($itemsGrouped as $vendorId => $items) {
-            $ids = $items->pluck('id');
+            $ids = $items->pluck('product_id');
             $vouchers = Voucher::query()
                 ->active()
                 ->join('voucher_product', function($join) use ($ids) {
-                    $join->on('vouchers.id', '=', 'voucher_product.voucher_id')
-                        ->whereIn('voucher_product.product_id', $ids);
+                    $join->on('vouchers.id', '=', 'voucher_product.voucher_id');
                 })
                 ->select(DB::raw('vouchers.*, voucher_product.product_id as product_id'))
                 ->where('vendor_id', $vendorId)
+                ->whereIn('voucher_product.product_id', $ids)
                 ->get();
 
             if ($vouchers->isEmpty()) {
