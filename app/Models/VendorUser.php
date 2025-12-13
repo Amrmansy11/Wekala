@@ -100,4 +100,23 @@ class VendorUser extends Authenticatable implements HasMedia
     {
         return $this->morphMany(CartShippingAddress::class, 'addressable');
     }
+
+    function isSellerUser(): bool
+    {
+        return $this->getStoreType() == Vendor::TYPE_SELLER;
+    }
+
+    public function isRetailerUser(): bool
+    {
+        return $this->getStoreType() == Vendor::TYPE_RETAILER;
+    }
+
+    public function getStoreType(): string
+    {
+        if (!$this->vendor) {
+            $this->load('vendor');
+        }
+
+        return $this->vendor->store_type;
+    }
 }

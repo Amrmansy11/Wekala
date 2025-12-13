@@ -34,6 +34,13 @@ class Voucher extends Model
     {
         return $this->morphTo();
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('start_date', '<=', now())
+            ->where('end_date', '>=', now());
+    }
+
     public function scopeStatus($query, ?string $status)
     {
         if (!$status) {

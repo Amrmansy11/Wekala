@@ -15,7 +15,7 @@ class OfferStoreRequest extends ResponseShape
         return [
             'name' => 'required|string|max:255',
             'desc' => 'nullable|string',
-            'start' => 'required|date|after_or_equal:' . now()->toDateTimeString(),
+            'start' => 'required|date|after_or_equal:today',
             'end' => 'required|date|after:start',
             'type' => 'required|in:quantity,purchase,custom',
             'discount' => 'required|numeric|min:0',

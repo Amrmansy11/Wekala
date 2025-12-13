@@ -20,7 +20,7 @@ class VoucherStoreRequest extends ResponseShape
             'number_of_use' => 'required|integer|min:1',
             'number_of_use_per_person' => 'required|integer|min:1',
             'for_all' => 'required|boolean',
-            'start_date' => 'required|date|after_or_equal:' . now()->toDateTimeString(),
+            'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after:start_date',
             'products' => 'required_if:for_all,0,false|array',
             'products.*' => 'exists:products,id',

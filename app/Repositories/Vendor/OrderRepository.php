@@ -2,8 +2,6 @@
 
 namespace App\Repositories\Vendor;
 
-use App\Models\CartShippingAddress;
-use App\Models\OrderShippingAddress;
 use Exception;
 use App\Models\Cart;
 use App\Models\Order;
@@ -16,10 +14,13 @@ use App\Models\VendorUser;
 use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Models\CartShippingAddress;
+use App\Models\OrderShippingAddress;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use http\Exception\InvalidArgumentException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -241,6 +242,91 @@ class OrderRepository extends BaseRepository
             ->paginate($perPage);
     }
 
+    public function listConsumerOrdersForRetailer(
+        int $vendorId,
+        int $userId,
+        int $perPage = 15,
+        ?string $status = null,
+        ?string $sortBy = 'id',
+        string $sortDirection = 'desc',
+        ?string $promotionType = null,
+    ): LengthAwarePaginator {
+        return $this->listConsumerOrders(
+            vendorType:Vendor::TYPE_RETAILER,
+            vendorId: $vendorId,
+            vendorUserId: $userId,
+            perPage: $perPage,
+            status: $status,
+            sortBy: $sortBy,
+            sortDirection: $sortDirection,
+            promotionType: $promotionType,
+        );
+    }
+
+    public function listConsumerOrdersForSeller(
+        int $vendorId,
+        int $perPage = 15,
+        ?string $status = null,
+        ?string $sortBy = 'id',
+        string $sortDirection = 'desc',
+        ?string $promotionType = null,
+    ): LengthAwarePaginator {
+        return $this->listConsumerOrders(
+            vendorType:Vendor::TYPE_SELLER,
+            vendorId: $vendorId,
+            perPage: $perPage,
+            status: $status,
+            sortBy: $sortBy,
+            sortDirection: $sortDirection,
+            promotionType: $promotionType,
+        );
+    }
+
+    public function listConsumerOrders(
+        string $vendorType,
+        int $vendorId,
+        int $vendorUserId = null,
+        int $perPage = 15,
+        ?string $status = null,
+        ?string $sortBy = 'id',
+        string $sortDirection = 'desc',
+        ?string $promotionType = null,
+    ): LengthAwarePaginator {
+
+
+        $query = $this->baseOrderQuery();
+        if ($vendorType === Vendor::TYPE_SELLER) {
+            $query->where('seller_vendor_id', $vendorId);
+        } else {
+            if (is_null($vendorUserId)) {
+                throw new InvalidArgumentException('vendorUserId can\'t be null');
+            }
+
+            $query->where('buyer_vendor_id', $vendorId)->where('vendor_user_id', $vendorUserId);
+        }
+
+        if (!is_null($promotionType)) {
+            $query->whereHas('order_items', function($query) use ($promotionType) {
+                switch ($promotionType) {
+                    case Order::PROMOTION_TYPE_DISCOUNT:
+                        $query->whereNotNull('discount_id');
+                        break;
+                    case Order::PROMOTION_TYPE_VOUCHER:
+                        $query->whereNotNull('voucher_id');
+                        break;
+                    case Order::PROMOTION_TYPE_OFFER:
+                        $query->whereNotNull('offer_id');
+                        break;
+                }
+            });
+        }
+
+        $query->when($status, fn($q) => $q->where('status', $status));
+
+        return $query->orderBy($sortBy, $sortDirection)
+            ->paginate($perPage);
+    }
+
     /**
      * Get seller orders with optional filters
      */
@@ -248,8 +334,8 @@ class OrderRepository extends BaseRepository
         int     $perPage = 15,
         ?string $status = null,
         ?string $sortBy = 'id',
-        string  $sortDirection = 'desc',
-        bool $b2bOnly = true,
+        string $sortDirection = 'desc',
+        string $type = Order::TYPE_B2B,
     ): LengthAwarePaginator {
         /** @var VendorUser $vendorUser */
         $vendorUser = Auth::guard('vendor-api')->user();
@@ -258,7 +344,7 @@ class OrderRepository extends BaseRepository
             ->where('seller_vendor_id', $vendorUser->vendor_id)
             ->when($status, fn($q) => $q->where('status', $status));
 
-        if ($b2bOnly) {
+        if ($type === Order::TYPE_B2B) {
             $query->whereNotNull('buyer_vendor_id');
         }
 

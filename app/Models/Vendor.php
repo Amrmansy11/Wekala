@@ -33,6 +33,8 @@ class Vendor extends Model implements HasMedia, AuditableContract
 {
     use HasTranslations, SoftDeletes, Auditable, InteractsWithMedia;
 
+    const TYPE_SELLER = 'seller';
+    const TYPE_RETAILER = 'retailer';
 
     public array $translatable = ['store_name', 'address', 'description'];
     protected $fillable = [
