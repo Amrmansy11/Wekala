@@ -12,10 +12,11 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\OrderResource;
 use App\Repositories\Vendor\ProductRepository;
 use App\Repositories\Consumer\NewOrderRepository;
+use App\Repositories\Consumer\OrderRepository as OriginalOrderRepository;
 
 class OrderController extends Controller
 {
-    public function __construct(private readonly NewOrderRepository $orderRepository, private readonly ProductRepository $productRepository) {}
+    public function __construct(private readonly NewOrderRepository $orderRepository, private readonly OriginalOrderRepository $originalOrderRepository) {}
 
     /**
      * GET /vendor/orders (my orders)
@@ -86,7 +87,7 @@ class OrderController extends Controller
         $request->validate([
             'shipping_address_id' => 'required|integer|exists:cart_shipping_addresses,id',
         ]);
-        $orders = $this->orderRepository->checkout($request->only(['shipping_address_id']));
+        $orders = $this->originalOrderRepository->checkout($request->only(['shipping_address_id']));
         return response()->json($orders);
     }
 
