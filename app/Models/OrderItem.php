@@ -67,6 +67,16 @@ class OrderItem extends Model implements AuditableContract
     {
         return $this->belongsTo(Discount::class);
     }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
+    public function vendorUser(): BelongsTo
+    {
+        return $this->belongsTo(VendorUser::class);
+    }
 }
 
 
