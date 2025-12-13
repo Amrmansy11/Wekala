@@ -39,7 +39,8 @@ class OrderResource extends JsonResource
                 return [
                     'order_id' => $order->id,
                     'seller_name' => $order->sellerVendor->store_name ?? 'N/A',
-                    // 'seller_logo' => $order->sellerVendor->getFirstMediaUrl('vendor_logo') ?? null,
+                    'seller_logo' => $order->sellerVendor->getFirstMediaUrl('vendor_logo') ?? null,
+                    'seller_cover' => $order->sellerVendor->getFirstMediaUrl('vendor_cover') ?? null,
                     'items_count' => $order->items->count(),
                     'subtotal' => (float) $order->total,
                     'discount' => (float) $order->discount,
