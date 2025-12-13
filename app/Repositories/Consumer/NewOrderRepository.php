@@ -171,7 +171,7 @@ class NewOrderRepository extends BaseRepository
         int $sellerVendorId,
         array $discountDecision,
         ?int $parentId
-    ): Order {
+         ): Order {
         $subtotal = $items->sum(fn($i) => $i->unit_price * $i->quantity);
         $delivery = 0.0;
         $total = max(0, $subtotal - $discountDecision['amount']) + $delivery;
@@ -187,6 +187,7 @@ class NewOrderRepository extends BaseRepository
             'delivery' => $delivery,
             'total' => $total,
             'status' => 'pending',
+            'code' => $this->generateUniqueCode(),
         ]);
 
         $order->save();
@@ -297,7 +298,7 @@ class NewOrderRepository extends BaseRepository
         CartItem $item,
         Collection $allItems,
         array $discountDecision
-    ): array {
+       ): array {
         $discountType = $discountDecision['type'];
 
         return match($discountType) {
@@ -388,7 +389,7 @@ class NewOrderRepository extends BaseRepository
         ?string $status,
         ?string $sortBy,
         string $sortDirection
-    ): LengthAwarePaginator {
+      ): LengthAwarePaginator {
         /** @var User $user */
         $user = Auth::guard('consumer-api')->user();
 
@@ -420,6 +421,7 @@ class NewOrderRepository extends BaseRepository
 
         return [
             'order_id' => $order->id,
+            'code' => $order->code,
             'status' => $order->status,
             'summary' => $totals,
             'vendors' => $vendors,
@@ -824,5 +826,14 @@ class NewOrderRepository extends BaseRepository
     {
         $discounts = $this->fetchActiveDiscounts($vendorId);
         return $this->calcItemDiscountFromCollection($item, $discounts);
+    }
+
+    private function generateUniqueCode(): string
+    {
+        do {
+            $code = str_pad(random_int(0, 9999999999), 10, '0', STR_PAD_LEFT);
+        } while (DB::table('orders')->where('code', $code)->exists());
+
+        return $code;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Consumer\Order;
 
 use Illuminate\Http\Request;
+use App\Http\Resources\OrderItemResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class OrderResource extends JsonResource
@@ -23,6 +24,7 @@ class OrderResource extends JsonResource
             'sellers_count' => 1 + $this->children->count(),
             'total_items' => $this->items->count() + $this->children->sum(fn($child) => $child->items->count()),
             'vendors' => $this->formatSellers(),
+            'code' => $this->code,
         ];
     }
 
