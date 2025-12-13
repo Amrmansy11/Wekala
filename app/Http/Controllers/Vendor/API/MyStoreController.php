@@ -103,7 +103,9 @@ class MyStoreController extends VendorController
             ->orderByDesc('order_items_sum_quantity')
             ->take(3)
             ->get();
-        $voucher = $vendor->vouchers()->where('start_date', '<', now())->where('end_date', '>', now())->take(5)->get();
+        $voucher = $vendor->vouchers()
+        ->status('active')
+        ->take(5)->get();
 
         $data = [
             'best_selling' => BestSellingStoreResource::collection($products),
@@ -193,7 +195,9 @@ class MyStoreController extends VendorController
                 'message' => 'No stores found'
             ], 404);
         }
-        $offer = $vendors->offers()->where('start', '<', now())->where('end', '>', now())->paginate($perPage);
+        $offer = $vendors->offers()
+        ->status('active')
+        ->paginate($perPage);
         return response()->json([
             'data' => OffersStoreResource::collection($offer),
             'pagination' => [
