@@ -2,10 +2,10 @@
 
 namespace App\Repositories\Consumer;
 
+use App\Models\Offer;
 use App\Models\CartShippingAddress;
 use App\Models\OrderShippingAddress;
 use App\Models\User;
-use Exception;
 use App\Models\Cart;
 use App\Models\Discount;
 use App\Models\Order;
@@ -14,7 +14,6 @@ use App\Models\Product;
 use App\Models\Voucher;
 use App\Models\CartItem;
 use App\Models\OrderItem;
-use App\Models\VendorUser;
 use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +28,10 @@ class OrderRepository extends BaseRepository
 {
     protected Model $model;
 
+    protected array $discounts = [];
+    protected array $vouchers = [];
+    protected array $offers = [];
+
     public function __construct(Order $model)
     {
         $this->model = $model;
@@ -42,12 +45,9 @@ class OrderRepository extends BaseRepository
         return parent::update($data, $modelId);
     }
 
+
     /**
-     * Checkout the current cart and create orders grouped by seller vendor.
-     * Ensures concurrency-safety by locking product/variant rows during stock deduction.
-     *
-     * @return array{orders: Collection}
-     * @throws Exception
+     * @throws \Throwable
      */
     public function checkout(array $request): array
     {
@@ -72,16 +72,16 @@ class OrderRepository extends BaseRepository
 
             $ordersCreated = collect();
             $itemsGrouped = $cart->items->groupBy('vendor_id');
+            $this->loadDiscounts($itemsGrouped);
+            $this->loadVouchers($itemsGrouped);
+            $this->loadOffers($itemsGrouped);
+
             $parentId = null;
             $index = 0;
             foreach ($itemsGrouped as $sellerVendorId => $items) {
-
-
                 $subtotal = $items->sum(fn($i) => $i->unit_price * $i->quantity);
-                $discount = $this->calcDiscountAmount($items, (int)$sellerVendorId);
+                $discount = $this->getOrderPromotionalDiscountAmount($items, (int)$sellerVendorId);
 
-                $voucherDiscount = $this->calcVoucherDiscount($items, (int)$sellerVendorId);
-                $discount += $voucherDiscount;
                 //                $delivery = $this->calcDeliveryFees($buyerVendor, (int)$sellerVendorId);
                 $delivery = 0.0;
                 $total = max(0, $subtotal - $discount) + $delivery;
@@ -140,7 +140,7 @@ class OrderRepository extends BaseRepository
                             throw ValidationException::withMessages([
                                 'quantity' => [__(
                                     'validation.custom.product.quantity',
-                                    ['color' => $variant->color, 'stock' => $availableQuantity]
+                                    ['color' => $variant->color, 'stock' => $availableQuantity],
                                 )],
                             ]);
                         }
@@ -153,7 +153,7 @@ class OrderRepository extends BaseRepository
                             throw ValidationException::withMessages([
                                 'quantity' => [__(
                                     'validation.custom.product.quantity',
-                                    ['color' => $product->name, 'stock' => $product->_b2c]
+                                    ['color' => $product->name, 'stock' => $product->_b2c],
                                 )],
                             ]);
                         }
@@ -161,24 +161,53 @@ class OrderRepository extends BaseRepository
                     }
 
                     // Calculate discount for this item
-                    $itemDiscountData = $this->calcItemDiscount($item, $sellerVendorId);
+                    $itemDiscountData = $this->getItemAppliedPromotion($item, $sellerVendorId);
                     $lineTotal = (float)$item->unit_price * (int)$item->quantity;
-                    $priceAfterDiscount = $item->unit_price - $itemDiscountData['amount'];
-                    $lineTotalAfterDiscount = $priceAfterDiscount * $item->quantity;
-                    OrderItem::query()->create([
+
+                    $data = [
                         'order_id' => $order->id,
                         'vendor_user_id' => $item->vendor_user_id,
                         'product_id' => $item->product_id,
                         'product_variant_id' => $item->product_variant_id,
-                        'discount_id' => $itemDiscountData['discount_id'],
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
-                        'discount_percentage' => $itemDiscountData['percentage'],
-                        'discount_amount' => $itemDiscountData['amount'],
-                        'price_after_discount' => $priceAfterDiscount,
                         'line_total' => $lineTotal,
-                        'line_total_after_discount' => $lineTotalAfterDiscount,
+                    ];
+
+                    $priceAfterDiscount = $item->unit_price;
+
+                    if (!is_null($itemDiscountData)) {
+                        if ($itemDiscountData['type'] === 'discount') {
+                            $data = array_merge($data, [
+                                'discount_id' => $itemDiscountData['id'],
+                                'discount_amount' => $itemDiscountData['discount_amount'],
+                                'discount_percentage' => $itemDiscountData['percentage'],
+                            ]);
+
+                            $priceAfterDiscount -= $itemDiscountData['discount_amount'];
+                        }
+
+                        if ($itemDiscountData['type'] === 'voucher') {
+                            $data = array_merge($data, [
+                                'voucher_id' => $itemDiscountData['id'],
+                                'discount_percentage' => $itemDiscountData['percentage'],
+                                'discount_amount' => $itemDiscountData['discount_amount'],
+                            ]);
+
+                            $priceAfterDiscount -= $itemDiscountData['discount_amount'];
+                        }
+
+                        if ($itemDiscountData['type'] === 'offer') {
+                            $data['offer_id'] = $itemDiscountData['id'];
+                        }
+                    }
+
+                    $data = array_merge($data, [
+                        'price_after_discount' => $priceAfterDiscount,
+                        'line_total_after_discount' => $priceAfterDiscount * $item->quantity,
                     ]);
+
+                    OrderItem::query()->create($data);
                 }
 
                 // Clear checked-out items from cart for this seller vendor
@@ -220,7 +249,7 @@ class OrderRepository extends BaseRepository
         int     $perPage = 15,
         ?string $status = null,
         ?string $sortBy = 'id',
-        string  $sortDirection = 'desc'
+        string  $sortDirection = 'desc',
     ): LengthAwarePaginator {
         /** @var User $user */
         $user = Auth::guard('consumer-api')->user();
@@ -239,7 +268,7 @@ class OrderRepository extends BaseRepository
         int     $perPage = 15,
         ?string $status = null,
         ?string $sortBy = 'id',
-        string  $sortDirection = 'desc'
+        string  $sortDirection = 'desc',
     ): LengthAwarePaginator {
         /** @var User $user */
         $user = Auth::guard('consumer-api')->user();
@@ -255,7 +284,7 @@ class OrderRepository extends BaseRepository
         int $perPage = 15,
         ?string $status = null,
         ?string $sortBy = 'id',
-        string $sortDirection = 'desc'
+        string $sortDirection = 'desc',
     ): LengthAwarePaginator {
         /** @var User $user */
         $user = Auth::guard('consumer-api')->user();
@@ -268,6 +297,7 @@ class OrderRepository extends BaseRepository
 
         $orders->getCollection()->transform(function ($order) {
             $grouped = $order->items->groupBy('vendor_id');
+            $this->loadDiscounts($grouped);
 
             $vendors = [];
             $totalSubtotal = 0;
@@ -290,20 +320,23 @@ class OrderRepository extends BaseRepository
                 $vendors[] = [
                     'vendor_id' => $vendorId,
                     'vendor_name' => optional($items->first()->vendor)->store_name,
-                    'items' => $items->map(fn($item) => [
-                        'id' => $item->id,
-                        'product_name' => $item->product->name ?? null,
-                        'image' => $item->product->getFirstMediaUrl('images'),
-                        'variant' => $item->variant->color ?? null,
-                        'size' => $item->variant ? $item->variant->sizes->pluck('size')->toArray() : [],
-                        'quantity' => $item->quantity,
-                        'unit_price' => $item->unit_price,
-                        'discount_percentage' => $this->calcItemDiscount($item, $vendorId)['percentage'],
-                        'discount_amount' => $this->calcItemDiscount($item, $vendorId)['amount'],
-                        'price_after_discount' => $item->unit_price - $this->calcItemDiscount($item, $vendorId)['amount'],
-                        'total_price' => $item->unit_price * $item->quantity,
-                        'total_after_discount' => ($item->unit_price - $this->calcItemDiscount($item, $vendorId)['amount']) * $item->quantity,
-                    ]),
+                    'items' => $items->map(function($item) use ($vendorId){
+                        $discountData = $this->calcItemDiscount($item, $vendorId);
+                        return [
+                            'id' => $item->id,
+                            'product_name' => $item->product->name ?? null,
+                            'image' => $item->product->getFirstMediaUrl('images'),
+                            'variant' => $item->variant->color ?? null,
+                            'size' => $item->variant ? $item->variant->sizes->pluck('size')->toArray() : [],
+                            'quantity' => $item->quantity,
+                            'unit_price' => $item->unit_price,
+                            'discount_percentage' => $discountData['percentage'],
+                            'discount_amount' => $discountData['amount'],
+                            'price_after_discount' => $item->unit_price - $discountData['amount'],
+                            'total_price' => $item->unit_price * $item->quantity,
+                            'total_after_discount' => ($item->unit_price - $discountData['amount']) * $item->quantity,
+                        ];
+                    }),
                 ];
             }
 
@@ -370,60 +403,74 @@ class OrderRepository extends BaseRepository
         ];
     }
 
-    /**
-     * Calculate discount for a single cart item.
-     *
-     * @param CartItem $item Cart item to calculate discount for
-     * @param Collection $activeDiscounts Collection of active discounts
-     * @return array ['discount_id' => int|null, 'percentage' => float, 'amount' => float]
-     */
-    private function calcItemDiscount(CartItem|OrderItem $item, int $vendor_id): array
+    private function calcItemDiscount(CartItem|OrderItem $item, int $vendorId): array
     {
-        $activeDiscounts = Discount::query()
-            ->active()
-            ->where('vendor_id', $vendor_id)
-            ->with('products')
-            ->get();
-        if ($activeDiscounts->isEmpty()) {
-            return ['discount_id' => null, 'percentage' => 0.0, 'amount' => 0.0];
-        }
-        $applicableDiscounts = $activeDiscounts->filter(function ($discount) use ($item) {
-            return $discount->products->contains('id', $item->product_id);
-        });
-
-        if ($applicableDiscounts->isEmpty()) {
-            return ['discount_id' => null, 'percentage' => 0.0, 'amount' => 0.0];
+        $discountData = ['id' => null, 'percentage' => 0.0, 'amount' => 0.0];
+        $discount = $this->getItemDiscount($item, $vendorId);
+        if (is_null($discount)) {
+            return $discountData;
         }
 
-        /** @var Discount $bestDiscount */
-        $bestDiscount = $applicableDiscounts->sortByDesc('percentage')->first();
-        $maxDiscountPercentage = $bestDiscount->percentage ?? 0.0;
-        $discountAmount = $item->unit_price * ($maxDiscountPercentage / 100);
-        return [
-            'discount_id' => $bestDiscount->id,
-            'percentage' => $maxDiscountPercentage,
-            'amount' => (float)$discountAmount,
-        ];
+        $discountData['id'] = $discount['id'];
+        $discountData['percentage'] = $discount['percentage'];
+        $discountData['amount'] = $item->unit_price * ($discount['percentage'] / 100);
+
+        return $discountData;
     }
 
-    /**
-     * Calculate total discount amount from the discounts table for cart items.
-     *
-     * @param Collection $items Cart items to calculate discount for
-     * @param Collection $activeDiscounts Collection of active discounts
-     * @return float Total discount amount
-     */
+    private function getItemDiscount(CartItem|OrderItem $item, int $vendorId): ?array
+    {
+        return $this->discounts[$vendorId][$item->product_id] ?? null;
+    }
+
+    private function getItemVoucher(CartItem|OrderItem $item, int $vendorId): ?array
+    {
+        return $this->vouchers[$vendorId][$item->product_id] ?? null;
+    }
+
+    private function getVendorOffer(int $vendorId): ?Offer
+    {
+        return $this->offers[$vendorId] ?? null;
+    }
+
+    private function getOrderPromotionalDiscountAmount(Collection $items, int $vendorId): float
+    {
+        return $this->calcDiscountAmount($items, $vendorId) ?: ($this->calcVoucherDiscount($items, $vendorId) ?: $this->calcOfferDiscount($items, $vendorId));
+    }
+
+    private function getItemAppliedPromotion(CartItem|OrderItem $item, int $vendorId): ?array
+    {
+        $discount = $this->getItemDiscount($item, $vendorId);
+        if (!is_null($discount)) {
+            return ['type' => 'discount', 'id' => $discount['id'], 'percentage' => $discount['percentage'], 'discount_amount' => $item->unit_price * ($discount['percentage'] / 100)];
+        }
+
+        $voucher = $this->getItemVoucher($item, $vendorId);
+        if (!is_null($voucher)) {
+            $discountAmount = 0;
+
+            if (!is_null($voucher['percentage'])) {
+                $discountAmount = $item->unit_price * ($voucher['percentage'] / 100);
+            }
+
+            if (!is_null($voucher['amount'])) {
+                $discountAmount = $voucher['amount'];
+            }
+            return ['type' => 'voucher', 'id' => $voucher['id'], 'percentage' => $voucher['percentage'], 'discount_amount' => $discountAmount];
+        }
+
+        $offer = $this->getVendorOffer($vendorId);
+        if (!is_null($offer)) {
+            return ['type' => 'offer', 'id' => $offer->id, 'percentage' => null, 'discount_amount' => null];
+        }
+
+        return null;
+    }
+
     private function calcDiscountAmount(Collection $items, int $sellerVendorId): float
     {
-        $activeDiscounts = Discount::query()
-            ->active()
-            ->where('vendor_id', $sellerVendorId)
-            ->with('products')
-            ->get();
         $totalDiscount = 0.0;
-        if ($activeDiscounts->isEmpty()) {
-            return $totalDiscount;
-        }
+
         foreach ($items as $item) {
             $itemDiscountData = $this->calcItemDiscount($item, $sellerVendorId);
             $totalDiscount += $itemDiscountData['amount'] * $item->quantity;
@@ -431,38 +478,64 @@ class OrderRepository extends BaseRepository
         return $totalDiscount;
     }
 
-    private function calcVoucherDiscount($items, int $vendorId): float
-
+    private function calcVoucherDiscount(Collection $items, int $vendorId): float
     {
-        $discount = 0.0;
-        $activeVouchers = Voucher::query()
-            ->where('vendor_id', $vendorId)
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
-            ->get();
+        $discount = 0;
 
         foreach ($items as $item) {
-            $applicable = $activeVouchers->filter(function ($v) use ($item) {
-                if ($v->for_all) {
-                    return true;
-                }
-                return $v->products()->where('product_id', $item->product_id)->exists();
-            });
-            if ($applicable->isEmpty()) {
+            $voucherData = $this->getItemVoucher($item, $vendorId);
+            if (is_null($voucherData)) {
                 continue;
             }
-            $best = $applicable->map(function ($v) use ($item) {
-                if (!is_null($v->percentage)) {
-                    return $item->unit_price * ($v->percentage / 100);
-                }
-                if (!is_null($v->amount)) {
-                    return (float)$v->amount;
-                }
-                return 0.0;
-            })->max() ?? 0.0;
-            $discount += $best * $item->quantity;
+
+            if (!is_null($voucherData['percentage'])) {
+                $discount += $item->unit_price * ($voucherData['percentage'] / 100) * $item->quantity;
+                continue;
+            }
+
+            if (!is_null($voucherData['amount'])) {
+                $discount += $voucherData['amount'] * $item->quantity;
+            }
         }
-        return (float)$discount;
+
+        return $discount;
+    }
+
+    private function calcOfferDiscount(Collection $items, int $vendorId): float
+    {
+        $discount = 0;
+
+        if (empty($this->offers[$vendorId])) {
+            return $discount;
+        }
+
+        $quantity = $items->sum('quantity');
+        $originalAmount  = $items->sum(fn($i) => $i->unit_price * $i->quantity);
+
+        foreach ($this->offers[$vendorId] as $offer) {
+            if ($offer->type === 'quantity' && $quantity >= $offer->quantity) {
+                return $originalAmount * ($offer->discount / 100);
+            }
+
+            if($offer->type === 'purchase' && $originalAmount >= $offer->amount) {
+                return $originalAmount * ($offer->discount / 100);
+            }
+
+            if ($offer->type === 'custom' && $quantity >= $offer->buy) {
+                /** @var OrderItem $lowesUnitPriceItem */
+                $lowesUnitPriceItem = $items->sortBy('unit_price')->first();
+                $freeItemsCount = 0;
+
+                $i = 0;
+                while ($freeItemsCount < $offer->get && $i < $lowesUnitPriceItem->quantity) {
+                    $discount += $lowesUnitPriceItem->unit_price;
+                    $freeItemsCount++;
+                    $i++;
+                }
+            }
+        }
+
+        return $discount;
     }
 
     private function calcDeliveryFees(?Vendor $buyerVendor, int $vendorId): float
@@ -478,5 +551,97 @@ class OrderRepository extends BaseRepository
             ->first();
 
         return $deliveryArea ? (float)$deliveryArea->price : 0.0;
+    }
+
+    private function loadDiscounts(Collection $itemsGrouped): void
+    {
+        foreach ($itemsGrouped as $vendorId => $items) {
+            $ids = $items->pluck('id');
+            $discounts = Discount::query()
+                ->active()
+                ->join('discount_products', function($join) use ($ids) {
+                    $join->on('discounts.id', '=', 'discount_products.discount_id')
+                        ->whereIn('discount_products.product_id', $ids);
+                })
+                ->select(DB::raw('discounts.*, discount_products.product_id as product_id'))
+                ->where('vendor_id', $vendorId)
+                ->get();
+
+            if ($discounts->isEmpty()) {
+                continue;
+            }
+
+            if (!isset($this->discounts[$vendorId])) {
+                $this->discounts[$vendorId] = [];
+            }
+
+            foreach ($discounts as $discount) {
+                if (!isset($this->discounts[$vendorId][$discount->product_id])) {
+                    $this->discounts[$vendorId][$discount->product_id] = ['id' => $discount->id, 'percentage' => $discount->percentage];
+                    continue;
+                }
+
+                if ($discount->percentage > $this->discounts[$vendorId][$discount->product_id]['percentage']) {
+                    $this->discounts[$vendorId][$discount->product_id] = ['id' => $discount->id, 'percentage' => $discount->percentage];
+                }
+            }
+        }
+    }
+    private function loadVouchers(Collection $itemsGrouped): void
+    {
+        foreach ($itemsGrouped as $vendorId => $items) {
+            $ids = $items->pluck('id');
+            $vouchers = Voucher::query()
+                ->active()
+                ->join('voucher_product', function($join) use ($ids) {
+                    $join->on('vouchers.id', '=', 'voucher_product.voucher_id')
+                        ->whereIn('voucher_product.product_id', $ids);
+                })
+                ->select(DB::raw('vouchers.*, voucher_product.product_id as product_id'))
+                ->where('vendor_id', $vendorId)
+                ->get();
+
+            if ($vouchers->isEmpty()) {
+                continue;
+            }
+
+            if (!isset($this->vouchers[$vendorId])) {
+                $this->vouchers[$vendorId] = [];
+            }
+
+            foreach ($vouchers as $voucher) {
+                if (!isset($this->vouchers[$vendorId][$voucher->product_id])) {
+                    $this->vouchers[$vendorId][$voucher->product_id] = ['id' => $voucher->id, 'percentage' => $voucher->percentage, 'amount' => $voucher->amount];
+                    continue;
+                }
+
+                if (!is_null($voucher->percentage) && $voucher->percentage > $this->vouchers[$vendorId][$voucher->product_id]['percentage'] ||
+                    !is_null($voucher->amount) && $voucher->amount > $this->vouchers[$vendorId][$voucher->product_id]['amount']
+                ) {
+                    $this->vouchers[$vendorId][$voucher->product_id] = ['id' => $voucher->id, 'percentage' => $voucher->percentage, 'amount' => $voucher->amount];
+                }
+            }
+        }
+    }
+    private function loadOffers(Collection $itemsGrouped): void
+    {
+        foreach ($itemsGrouped as $vendorId => $items) {
+            $offers = Offer::query()
+                ->active()
+                ->where('vendor_id', $vendorId)
+                ->get();
+
+            if ($offers->isEmpty()) {
+                continue;
+            }
+
+            if (!isset($this->offers[$vendorId])) {
+                $this->offers[$vendorId] = [];
+            }
+
+            foreach ($offers as $offer) {
+                $this->offers[$vendorId][] = $offer;
+            }
+        }
     }
 }

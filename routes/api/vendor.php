@@ -137,6 +137,7 @@ Route::middleware('auth:vendor-api')->group(function () {
         Route::post('checkout', [OrderController::class, 'checkout']);
         Route::get('orders/seller', [OrderController::class, 'getSellerOrders']);
         Route::get('orders/buyer', [OrderController::class, 'getBuyerOrders']);
+        Route::get('orders/consumer', [OrderController::class, 'listConsumerOrders']);
         Route::get('order/{id}', [OrderController::class, 'show']);
         Route::post('order/{order}/verify-code', [OrderController::class, 'verifyOrder']);
         Route::post('order/{id}/change-status', [OrderController::class, 'changeStatus']);

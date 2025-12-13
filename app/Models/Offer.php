@@ -44,6 +44,13 @@ class Offer extends Model implements HasMedia
     {
         return $this->morphTo();
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('start', '<=', now())
+            ->where('end', '>=', now());
+    }
+
     public function scopeStatus($query, ?string $status)
     {
         if (!$status) {

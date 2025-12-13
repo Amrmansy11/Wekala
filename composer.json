@@ -16,7 +16,8 @@
         "owen-it/laravel-auditing": "^14.0",
         "spatie/laravel-medialibrary": "^11.13",
         "spatie/laravel-permission": "^6.21",
-        "spatie/laravel-translatable": "^6.11"
+        "spatie/laravel-translatable": "^6.11",
+        "ext-http": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

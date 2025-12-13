@@ -34,6 +34,20 @@ class Order extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 
+    const TYPE_B2B = 'b2b';
+    const TYPE_B2C = 'b2c';
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_CONFIRMED = 'confirmed';
+    const STATUS_SHIPPED = 'shipped';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_CANCELLED = 'cancelled';
+
+    const PROMOTION_TYPE_DISCOUNT = 'discount';
+    const PROMOTION_TYPE_VOUCHER = 'voucher';
+
+    const PROMOTION_TYPE_OFFER = 'offer';
+
     protected $fillable = [
         'buyer_vendor_id',
         'seller_vendor_id',

@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Vendor\API;
 use App\Models\Order;
 use Exception;
 use App\Helpers\AppHelper;
+use App\Models\VendorUser;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\OrderResource;
 use App\Repositories\Vendor\OrderRepository;
 use App\Repositories\Vendor\ProductRepository;
+use App\Http\Requests\Vendor\Api\Offer\OfferStoreRequest;
+use App\Http\Requests\Vendor\Api\Order\ListConsumerOrders;
 
 class OrderController extends Controller
 {
@@ -39,6 +43,50 @@ class OrderController extends Controller
     {
         $perPage = $request->integer('per_page', 15);
         $orders = $this->orderRepository->myBuyerOrders($perPage);
+        return response()->json([
+            'data' => OrderResource::collection($orders),
+            'pagination' => [
+                'currentPage' => $orders->currentPage(),
+                'total' => $orders->total(),
+                'perPage' => $orders->perPage(),
+                'lastPage' => $orders->lastPage(),
+                'hasMorePages' => $orders->hasMorePages(),
+            ]
+        ]);
+    }
+
+    public function listConsumerOrders(ListConsumerOrders $request): JsonResponse
+    {
+        $perPage = $request->get('per_page', 15);
+        $sort = $request->get('sort', 'desc');
+        $sortBy = $request->get('sort_by', 'id');
+        $status = $request->get('status', Order::STATUS_PENDING);
+        $promotionType = $request->get('promotion_type');
+
+        /** @var VendorUser $vendorUser */
+        $vendorUser = Auth::guard('vendor-api')->user();
+
+        if ($vendorUser->isSellerUser()) {
+            $orders = $this->orderRepository->listConsumerOrdersForSeller(
+                vendorId: $vendorUser->vendor_id,
+                perPage: $perPage,
+                status: $status,
+                sortBy: $sortBy,
+                sortDirection: $sort,
+                promotionType: $promotionType,
+            );
+        } else {
+            $orders = $this->orderRepository->listConsumerOrdersForRetailer(
+                vendorId: $vendorUser->vendor_id,
+                userId: $vendorUser->id,
+                perPage: $perPage,
+                status: $status,
+                sortBy: $sortBy,
+                sortDirection: $sort,
+                promotionType: $promotionType,
+            );
+        }
+
         return response()->json([
             'data' => OrderResource::collection($orders),
             'pagination' => [
