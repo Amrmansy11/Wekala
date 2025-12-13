@@ -23,7 +23,7 @@ class ListConsumerOrders extends ResponseShape
             'sort_by'        => ['nullable', 'string', 'in:id,name,created_at'],
             'sort_type'      => ['nullable', 'string', 'in:asc,desc'],
             'status'         => ['nullable', 'string', 'in:pending,confirmed,shipped,completed,cancelled'],
-            'promotion_type' => ['nullable', 'string', 'int:discount,voucher,offer'],
+            'promotion_type' => ['nullable', 'string', 'in:discount,voucher,offer'],
         ];
     }
 }
