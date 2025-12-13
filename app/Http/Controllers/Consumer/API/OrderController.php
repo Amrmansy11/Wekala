@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Consumer\API;
 
 use Exception;
 use App\Models\User;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
@@ -41,7 +42,7 @@ class OrderController extends Controller
         $orders = $this->orderRepository->myBuyerOrdersGroupedByVendorForConsumer($perPage);
 
         return response()->json([
-            'data' => $orders->getCollection(), // فقط الأوردرات بعد التحويل
+            'data' => $orders->getCollection(),
             'pagination' => [
                 'currentPage' => $orders->currentPage(),
                 'total' => $orders->total(),
@@ -96,5 +97,20 @@ class OrderController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
         return response()->json(['data' => new OrderResource($order)]);
+    }
+
+    public function verifyOrder(Request $request, Order $order): JsonResponse
+    {
+        try {
+            $request->validate([
+                'code'     => 'required|string',
+            ]);
+            if($order->code == $request->get('code')) {
+                $order->update(['status' => 'completed']);
+                return response()->json(['data' => [], 'success' => true]);
+            }
+        } catch (Exception $e) {
+            return response()->json(['data' => [], 'success' => false, 'message' => $e->getMessage()]);
+        }
     }
 }
