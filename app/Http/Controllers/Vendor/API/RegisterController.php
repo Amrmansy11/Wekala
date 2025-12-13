@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Vendor\API;
-
+use Exception;
 use Carbon\Carbon;
 use App\Helpers\AppHelper;
 use App\Models\VendorUser;

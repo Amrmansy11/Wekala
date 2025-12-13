@@ -2,7 +2,6 @@
 
 namespace App\Repositories\Consumer;
 
-use Exception;
 use App\Models\Cart;
 use App\Models\User;
 use App\Models\Offer;
@@ -24,7 +23,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class OrderRepository extends BaseRepository
+class NewOrderRepository extends BaseRepository
 {
     protected Model $model;
 

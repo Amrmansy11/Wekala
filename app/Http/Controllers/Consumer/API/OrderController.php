@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers\Consumer\API;
 
-use App\Models\User;
 use Exception;
-use App\Helpers\AppHelper;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\OrderResource;
-use App\Repositories\Consumer\OrderRepository;
-use App\Repositories\Vendor\ProductRepository;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\OrderResource;
+use App\Repositories\Vendor\ProductRepository;
+use App\Repositories\Consumer\NewOrderRepository;
 
 class OrderController extends Controller
 {
-    public function __construct(private readonly OrderRepository $orderRepository, private readonly ProductRepository $productRepository) {}
+    public function __construct(private readonly NewOrderRepository $orderRepository, private readonly ProductRepository $productRepository) {}
 
     /**
      * GET /vendor/orders (my orders)
