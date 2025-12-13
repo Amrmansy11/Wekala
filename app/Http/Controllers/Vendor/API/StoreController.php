@@ -87,7 +87,9 @@ class StoreController extends VendorController
             ], 404);
         }
         $products = $vendors->products()->withAvg('reviews', 'rating')->inRandomOrder()->take(3)->get();
-        $voucher = $vendors->vouchers()->where('start_date', '<', now())->where('end_date', '>', now())->take(5)->get();
+        $voucher = $vendors->vouchers()
+        ->status('active')
+        ->take(5)->get();
 
         $data = [
             'best_selling' => BestSellingStoreResource::collection($products),
@@ -202,7 +204,9 @@ class StoreController extends VendorController
                 'message' => 'No stores found'
             ], 404);
         }
-        $offer = $vendors->offers()->where('start', '<', now())->where('end', '>', now())->paginate($perPage);
+        $offer = $vendors->offers()
+        ->status('active')
+        ->paginate($perPage);
         return response()->json([
             'data' => OffersStoreResource::collection($offer),
             'pagination' => [
