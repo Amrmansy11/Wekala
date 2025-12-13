@@ -91,5 +91,6 @@ Route::middleware('auth:consumer-api')->group(function () {
     });
     Route::post('checkout', [OrderController::class, 'checkout']);
     Route::get('orders/buyer', [OrderController::class, 'getBuyerOrders']);
+    Route::post('order/{order}/verify-code', [OrderController::class, 'verifyOrder'])->name('consumer.order.verify-code');
     // Route::get('order/{id}', [OrderController::class, 'show']);
 });
