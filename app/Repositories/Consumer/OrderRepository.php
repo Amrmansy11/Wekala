@@ -638,7 +638,7 @@ class OrderRepository extends BaseRepository
             $offers = Offer::query()
                 ->active()
                 ->join('offer_products', function($join) {
-                    $join->on('offers.id', '=', 'offer_products.voucher_id');
+                    $join->on('offers.id', '=', 'offer_products.offer_id');
                 })
                 ->where('vendor_id', $vendorId)
                 ->whereIn('offer_products.product_id', $ids)
