@@ -36,7 +36,7 @@ class ProductController extends Controller
         $query = $this->productRepository->query()
             ->withoutGlobalScopes()
             ->where('vendor_id', AppHelper::getVendorId())
-            ->sellersOnly()
+            // ->sellersOnly()
             ->with('category', 'brand', 'tags', 'sizes', 'variants', 'reviews')
             ->withCount('wishlists as favorites_count');
 
