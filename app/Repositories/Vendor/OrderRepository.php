@@ -306,7 +306,7 @@ class OrderRepository extends BaseRepository
         }
 
         if (!is_null($promotionType)) {
-            $query->whereHas('order_items', function($query) use ($promotionType) {
+            $query->whereHas('items', function($query) use ($promotionType) {
                 switch ($promotionType) {
                     case Order::PROMOTION_TYPE_DISCOUNT:
                         $query->whereNotNull('discount_id');
