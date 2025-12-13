@@ -321,7 +321,8 @@ class OrderRepository extends BaseRepository
             });
         }
 
-        $query->when($status, fn($q) => $q->where('status', $status));
+        $query->whereNotNull('user_id')
+            ->when($status, fn($q) => $q->where('status', $status));
 
         return $query->orderBy($sortBy, $sortDirection)
             ->paginate($perPage);
