@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\Consumer\API;
 
-use App\Helpers\AppHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Resources\FeedResource;
 use App\Http\Resources\CategoriesResource;
 use App\Http\Resources\Home\BrandResource;
 use App\Http\Resources\HomeSliderResource;
@@ -22,7 +20,6 @@ use App\Repositories\Admin\ElwekalaCollectionRepository;
 use App\Http\Controllers\Consumer\API\ConsumerController;
 use App\Http\Resources\Consumer\Home\JustForYouProductResource;
 use App\Http\Resources\Consumer\Home\ElWekalaCollectionsResource;
-use App\Http\Resources\Consumer\Point\PointProductPreviewResource;
 use App\Http\Resources\Consumer\Home\ElWekalaCollectionsHomeResource;
 
 class HomeController extends ConsumerController
