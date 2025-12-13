@@ -13,8 +13,7 @@ class CategoriesVendorResource extends JsonResource
             'name' => $this->resource->name,
             'size_required' => $this->resource->size_required,
             'size' => $this->resource->size,
-            'image' => $this->resource->image ? $this->resource->image_path : null,
-
+            'image' => $this->resource->getFirstMediaUrl('category_image'),
         ];
     }
 }
