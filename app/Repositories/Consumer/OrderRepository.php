@@ -430,7 +430,14 @@ class OrderRepository extends BaseRepository
 
     private function getVendorOffer(int $vendorId): ?Offer
     {
-        return $this->offers[$vendorId] ?? null;
+        $offers = $this->offers[$vendorId] ?? [];
+        if (empty($offers)) {
+            return null;
+        }
+
+        $offers = array_values($offers);
+
+        return $offers[0];
     }
 
     private function getOrderPromotionalDiscountAmount(Collection $items, int $vendorId): float
@@ -512,26 +519,27 @@ class OrderRepository extends BaseRepository
         $quantity = $items->sum('quantity');
         $originalAmount  = $items->sum(fn($i) => $i->unit_price * $i->quantity);
 
-        foreach ($this->offers[$vendorId] as $offer) {
-            if ($offer->type === 'quantity' && $quantity >= $offer->quantity) {
-                return $originalAmount * ($offer->discount / 100);
-            }
+        $offers = array_values($this->offers[$vendorId]);
+        $offer = $offers[0];
 
-            if($offer->type === 'purchase' && $originalAmount >= $offer->amount) {
-                return $originalAmount * ($offer->discount / 100);
-            }
+        if ($offer->type === 'quantity' && $quantity >= $offer->quantity) {
+            return $originalAmount * ($offer->discount / 100);
+        }
 
-            if ($offer->type === 'custom' && $quantity >= $offer->buy) {
-                /** @var OrderItem $lowesUnitPriceItem */
-                $lowesUnitPriceItem = $items->sortBy('unit_price')->first();
-                $freeItemsCount = 0;
+        if($offer->type === 'purchase' && $originalAmount >= $offer->amount) {
+            return $originalAmount * ($offer->discount / 100);
+        }
 
-                $i = 0;
-                while ($freeItemsCount < $offer->get && $i < $lowesUnitPriceItem->quantity) {
-                    $discount += $lowesUnitPriceItem->unit_price;
-                    $freeItemsCount++;
-                    $i++;
-                }
+        if ($offer->type === 'custom' && $quantity >= $offer->buy) {
+            /** @var OrderItem $lowesUnitPriceItem */
+            $lowesUnitPriceItem = $items->sortBy('unit_price')->first();
+            $freeItemsCount = 0;
+
+            $i = 0;
+            while ($freeItemsCount < $offer->get && $i < $lowesUnitPriceItem->quantity) {
+                $discount += $lowesUnitPriceItem->unit_price;
+                $freeItemsCount++;
+                $i++;
             }
         }
 
@@ -559,7 +567,7 @@ class OrderRepository extends BaseRepository
             $ids = $items->pluck('product_id');
             $discounts = Discount::query()
                 ->active()
-                ->join('discount_products', function($join) use ($ids) {
+                ->join('discount_products', function($join) {
                     $join->on('discounts.id', '=', 'discount_products.discount_id');
                 })
                 ->select(DB::raw('discounts.*, discount_products.product_id as product_id'))
@@ -593,7 +601,7 @@ class OrderRepository extends BaseRepository
             $ids = $items->pluck('product_id');
             $vouchers = Voucher::query()
                 ->active()
-                ->join('voucher_product', function($join) use ($ids) {
+                ->join('voucher_product', function($join) {
                     $join->on('vouchers.id', '=', 'voucher_product.voucher_id');
                 })
                 ->select(DB::raw('vouchers.*, voucher_product.product_id as product_id'))
@@ -626,9 +634,14 @@ class OrderRepository extends BaseRepository
     private function loadOffers(Collection $itemsGrouped): void
     {
         foreach ($itemsGrouped as $vendorId => $items) {
+            $ids = $items->pluck('product_id');
             $offers = Offer::query()
                 ->active()
+                ->join('offer_products', function($join) {
+                    $join->on('offers.id', '=', 'offer_products.voucher_id');
+                })
                 ->where('vendor_id', $vendorId)
+                ->whereIn('offer_products.product_id', $ids)
                 ->get();
 
             if ($offers->isEmpty()) {
@@ -640,7 +653,9 @@ class OrderRepository extends BaseRepository
             }
 
             foreach ($offers as $offer) {
-                $this->offers[$vendorId][] = $offer;
+                if (!isset($this->offers[$vendorId][$offer->product_id])) {
+                    $this->offers[$vendorId][$offer->product_id] = $offer;
+                }
             }
         }
     }
