@@ -45,7 +45,7 @@ class FeedController extends VendorController
         $feeds = $this->feedRepository->query()
             ->where('vendor_id', $id)
             ->with('products')
-            ->where('created_at', '>=', now()->subDay())
+            // ->where('created_at', '>=', now()->subDay())
             ->get();
         return response()->json([
             'data' => FeedResource::collection($feeds),

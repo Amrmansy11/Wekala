@@ -185,7 +185,7 @@ class HomeController extends VendorController
     {
         $feed = $this->feedRepository->query()
             ->where('type', 'feed')
-            ->whereDate('created_at', now()->toDateString())
+            // ->whereDate('created_at', now()->toDateString())
             ->latest()
             ->get();
         return response()->json([
