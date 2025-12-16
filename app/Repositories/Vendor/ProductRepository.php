@@ -10,6 +10,7 @@ use App\Repositories\BaseRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use App\Models\VendorUser;
 
 class ProductRepository extends BaseRepository
 {
@@ -37,7 +38,7 @@ class ProductRepository extends BaseRepository
             $product = new Product(array_merge($data, [
                 'published_at' => $publishedAt,
             ]));
-            $product->creatable()->associate(auth()->user());
+            $product->creatable()->associate($data['vendor_id'] ? VendorUser::find($data['vendor_id']) : auth()->user());
             $product->save();
 
             if (!empty($data['tags']) && is_array($data['tags'])) {
