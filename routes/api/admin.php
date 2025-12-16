@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\Api\DashboardController;
 use App\Http\Controllers\Admin\Api\FlashSaleController;
 use App\Http\Controllers\Admin\Api\PackingUnitController;
 use App\Http\Controllers\Admin\Api\DeliveryAreaController;
+use App\Http\Controllers\Admin\API\SizeTemplateController;
 use App\Http\Controllers\Admin\Api\ElwekalaCollectionController;
 
 Route::post('login', [AuthController::class, 'login']);
@@ -73,4 +74,7 @@ Route::middleware('auth:admin-api')->group(function () {
     Route::patch('points/{point}/toggle-archive', [PointController::class, 'toggleArchive']);
     Route::resource('offer', OfferController::class);
     Route::resource('branchs', BranchController::class)->names('admin.branches');
+    Route::resource('sizes-templates', SizeTemplateController::class)->names('admin.sizes-templates');
+    Route::post('sizes-patterns/{id}/{vendor_id}', [SizeTemplateController::class, 'getSizePatternsBySizeTemplateId'])
+        ->name('admin.sizes-patterns');
 });
